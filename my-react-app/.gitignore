@@ -36,3 +36,6 @@ package-lock.json
 .DS_Store
 .vscode/
 .idea/
+
+# Ignore supabase
+supabase.js
