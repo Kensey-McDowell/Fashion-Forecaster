@@ -120,6 +120,7 @@ export default function ColorForecasting() {
 
       {/* DISPLAY SECTION */}
       <div className="column">
+        <div className="row">
           {colors.map((color) => (
             <div
               key={color.id}
@@ -137,5 +138,7 @@ export default function ColorForecasting() {
         </div>
 
       </div>
+
+    </div>
   );
 }
