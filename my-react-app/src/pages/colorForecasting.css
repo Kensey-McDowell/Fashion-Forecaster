@@ -1,0 +1,36 @@
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  padding: 40px;
+}
+
+.field {
+  height: 150px;
+  border: 1px solid black;
+  position: relative;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.field {
+  flex: 1;
+  border: 1px solid black;
+  padding: 10px;
+  background: white;
+}
+
+.selected-display {
+    margin-top: 20px;
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+}
