@@ -30,7 +30,7 @@ function App() {
                     <Route path="/color" element={<ColorPage />} /> 
                     <Route path="/collage" element={<CollagePage />} />
                     <Route path="/market" element={<MarketPage />} />
-                    <Route path="/fashionWeek" element={<FashionPage />} /> 
+                    <Route path="/fashion" element={<FashionPage />} /> 
                     <Route path="/street" element={<StreetStylePage />} />
                     
                     <Route path="*" element={<TestPage />} />
