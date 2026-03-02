@@ -3,7 +3,7 @@ h1{
 }
 
 /* ── Hero ── */
-.hero {
+.welcome {
     position: relative;
     min-height: 600px;
     display: flex;
@@ -11,11 +11,10 @@ h1{
     justify-content: center;
     align-items: center;
     text-align: center;
-    padding: 8rem 1.5rem;
-    background-color: var(--color-bg);
+    padding: 8px;
   }
   
-  .hero__grid-overlay {
+  .welcome_grid-overlay {
     position: absolute;
     inset: 0;
     opacity: 0.1;
@@ -23,46 +22,41 @@ h1{
       90deg,
       transparent,
       transparent 100px,
-      rgba(0, 0, 0, 0.05) 100px,
+      rgba(66, 62, 62, 0.05) 100px,
       rgba(0, 0, 0, 0.05) 101px
     );
-    pointer-events: none;
   }
   
-  .hero__title {
+  .welcome_title {
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 150px;
+    font-size: 120px;
     line-height: 1;
-    color: var(--color-text);
-    margin: 0 0 1rem;
+    margin: 20px;
   }
 
-  .hero__dates {
+  .welcome_dates {
     font-family: var(--font-label);
     font-size: 30px;
     letter-spacing: 0.3em;
     text-transform: uppercase;
-    color: var(--color-text);
   }
 
-  .hero__subtitle {
+  .welcome_subtitle {
     font-family: var(--font-body);
     font-size: 45px;
     font-style: italic;
     letter-spacing: 0.05em;
     color: #555;
-    margin-bottom: 1.5rem;
+    margin-bottom: 20px;
+    margin-top: 10px;
   }
 
-  .hero__divider {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 3px;
-    height: 6rem;
-    background: linear-gradient(to bottom, var(--color-text), transparent);
+  .center_line{
+    width: 5px;
+    height: 150px; /* adjust length */
+    background: linear-gradient(to bottom, #000, transparent);
+    margin: 5px;
   }
 
 
@@ -70,7 +64,6 @@ h1{
 .btn {
     display: inline-block;
     padding: 1rem 2.5rem;
-    font-family: var(--font-label);
     font-size: 0.75rem;
     letter-spacing: 0.3em;
     text-transform: uppercase;
@@ -92,37 +85,32 @@ h1{
 
 /* ── Designers Section ── */
 .designers {
-    padding: 6rem 1.5rem;
-    background-color: var(--color-bg);
+    padding: 5px;
   }
   
-  .designers__inner {
+  .designers_inner {
     max-width: 72rem;
-    margin: 0 auto;
+    margin: auto;
+    padding-bottom: 20px;
   }
   
-  .designers__header {
+  .designers_header {
     text-align: center;
-    margin-bottom: 4rem;
   }
   
-  .designers__label {
-    font-family: var(--font-label);
-    font-size: 0.75rem;
-    letter-spacing: 0.4em;
+  .designers_label {
+    font-size: 50px;
+    letter-spacing: 5px;
     text-transform: uppercase;
-    color: var(--color-text);
-    margin-bottom: 1rem;
+    margin-bottom: 10px;
   }
   
-  .designers__heading {
-    font-family: var(--font-display);
+  .designers_heading {
     font-size: clamp(2.25rem, 5vw, 3.75rem);
-    color: var(--color-text);
     margin: 0;
   }
   
-  .designers__grid {
+  .designers_grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
@@ -138,14 +126,14 @@ h1{
     cursor: pointer;
   }
   
-  .designer-card__image {
+  .designer-card_image {
     aspect-ratio: 1;
     overflow: hidden;
     margin-bottom: 1rem;
     background: linear-gradient(135deg, #e0e0e0, #d0d0d0);
   }
   
-  .designer-card__initial-wrap {
+  .designer-card_initial-wrap {
     width: 100%;
     height: 100%;
     display: flex;
@@ -153,22 +141,18 @@ h1{
     justify-content: center;
     transition: transform 0.5s ease;
   }
-  .designer-card:hover .designer-card__initial-wrap {
+  .designer-card:hover .designer-card_initial-wrap {
     transform: scale(1.1);
   }
   
-  .designer-card__initial {
-    font-family: var(--font-display);
+  .designer-card_initial {
     font-size: 3.75rem;
-    color: var(--color-text);
   }
   
-  .designer-card__name {
+  .designer-card_name {
     text-align: center;
-    font-family: var(--font-label);
     font-size: 0.875rem;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: var(--color-text);
   }
   
