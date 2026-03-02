@@ -3,16 +3,16 @@ import "./fashionWeek.css";
 
 
 //Welcome Section
-function Welcome() {
+function Welcome(){
   return (
     <header className="welcome">
-      <div className="welcome_grid-overlay" aria-hidden="true" />
+      <div className="welcome_grid" aria-hidden="true" />
 
       <h1 className="welcome_title"> FASHION WEEK </h1>
 
       <p className="welcome_dates"> Fall 2024 </p>
 
-      <p className="welcome_subtitle"> Ready to Wear </p>
+      <p className="welcome_subtitle"> Ready - to - Wear </p>
 
       <div className="center_line" />
       
@@ -28,7 +28,7 @@ const DESIGNERS = [
   { initial: "LV", name: "Louis Vuitton" },
 ];
 
-function Designers() {
+function Designers(){
   return (
     <section id="designers" className="designers">
       <div className="designers_inner">
@@ -42,7 +42,7 @@ function Designers() {
             <div key={name}
               className={`designer-card ${(i + 2) * 100}`}
             >
-              <div className="designer-card_image hover-lift">
+              <div className="designer-card_symbol">
                 <div className="designer-card_initial-wrap">
                   <span className="designer-card_initial">{initial}</span>
                 </div>
@@ -57,7 +57,7 @@ function Designers() {
 }
 
 // Page component
-export default function FashionPage() {
+export default function FashionPage(){
   return (
     <div>
       <Welcome />
