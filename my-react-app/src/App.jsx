@@ -5,12 +5,13 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import IntroPage from "./pages/intro.jsx";
 import AboutPage from "./pages/about.jsx";
 import CollagePage from "./pages/collageCreator.jsx";
-import ColorPage from "./pages/colorForecasting.jsx";
+import ColorPage from "./pages/features/colorForecasting/colorForecasting.jsx";
 import MarketPage from "./pages/marketResearch.jsx";
 import StreetStylePage from "./pages/streetStyle.jsx";
 import TrendPage from "./pages/trendForecasting.jsx";
 import FashionPage from "./pages/fashionWeek.jsx";
 import TestPage from "./pages/test.jsx"; 
+import ForecastDemo from "./pages/ForecastDemo.jsx";
 
 // Components
 import Navbar from "./components/Navbar";
@@ -32,6 +33,7 @@ function App() {
                     <Route path="/market" element={<MarketPage />} />
                     <Route path="/fashionWeek" element={<FashionPage />} /> 
                     <Route path="/street" element={<StreetStylePage />} />
+                    <Route path="/forecast-demo" element={<ForecastDemo />} />
                     
                     <Route path="*" element={<TestPage />} />
                 </Routes>

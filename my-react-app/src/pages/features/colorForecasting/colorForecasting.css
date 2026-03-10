@@ -1,0 +1,259 @@
+.color-page,
+.color-page *,
+.two-column-section,
+.card-section,
+.card-grid,
+.color-form,
+.color-card {
+  box-sizing: border-box;
+}
+
+.color-page {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  padding: 0 0 40px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.hero {
+  min-height: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  background: linear-gradient(135deg, #b9c7d4, #d6dfd3);
+}
+
+.hero-text {
+  max-width: 700px;
+  width: 100%;
+  text-align: center;
+}
+
+.small-label {
+  margin: 0 0 8px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.two-column-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.column-box {
+  padding: 24px;
+  background: #f4f1ec;
+  border: 1px solid #d8d2ca;
+  max-width: 100%;
+}
+
+.card-section {
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-top: 20px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.color-card {
+  position: relative;
+  border: 1px solid #d0d0d0;
+  background: #ffffff;
+  max-width: 100%;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.color-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px rgba(17, 17, 17, 0.08);
+}
+
+.color-swatch {
+  height: 160px;
+  max-width: 100%;
+}
+
+.clay {
+  background: #d8b8a6;
+}
+
+.sage {
+  background: #b7c4b2;
+}
+
+.blue {
+  background: #98a8bc;
+}
+
+.sand {
+  background: #ddc9ab;
+}
+
+.card-text {
+  padding: 16px;
+}
+
+.card-text h3,
+.card-text p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.card-text p {
+  margin-top: 8px;
+}
+
+@media (max-width: 800px) {
+  .two-column-section {
+    grid-template-columns: 1fr;
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Color Form --- */
+
+.color-form {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 20px 0 28px;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 100%;
+  padding: 18px;
+  border: 1px solid #e6e0d8;
+  background: #f9f7f3;
+  overflow: hidden;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.name-field,
+.hex-field {
+  flex: 1 1 180px;
+}
+
+.color-picker-field {
+  flex: 0 0 auto;
+}
+
+.color-form input[type="text"] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid #d8d2ca;
+  font-size: 14px;
+  background: #ffffff;
+  color: #111111;
+}
+
+.color-form input[type="color"] {
+  width: 48px;
+  min-width: 48px;
+  height: 48px;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  background: transparent;
+}
+
+.color-form button {
+  flex: 0 1 auto;
+  max-width: 100%;
+  padding: 12px 18px;
+  background: #111111;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  transition: background-color 0.2s ease;
+}
+
+.color-form button:hover {
+  background: #000000;
+}
+
+.hex-error {
+  margin: 6px 0 0;
+  color: #c0392b;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.delete-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #111111;
+  box-shadow: 0 4px 12px rgba(17, 17, 17, 0.12);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.delete-button:hover {
+  background: #f6f4ef;
+}
+
+.delete-button:focus-visible {
+  outline: 2px solid #111111;
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .color-form {
+    align-items: stretch;
+  }
+
+  .color-picker-field {
+    flex: 0 0 48px;
+  }
+
+  .color-form button {
+    width: 100%;
+  }
+}
