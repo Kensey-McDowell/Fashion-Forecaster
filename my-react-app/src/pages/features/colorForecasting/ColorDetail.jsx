@@ -20,6 +20,7 @@ export default function ColorDetail({ colorId, onBack }) {
   const navigate = useNavigate();
   const [activeColorId, setActiveColorId] = useState(colorId);
   const [color, setColor] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [pantones, setPantones] = useState([]);
   const [relatedColors, setRelatedColors] = useState([]);
   const [stories, setStories] = useState([]);
@@ -48,14 +49,24 @@ export default function ColorDetail({ colorId, onBack }) {
 
   useEffect(() => {
     async function loadColorDetail() {
-      const [currentColor, allColors] = await Promise.all([
-        getColorById(activeColorId),
-        getColors()
-      ]);
+      setIsLoading(true);
 
-      setColor(currentColor);
+      try {
+        const [currentColor, allColors] = await Promise.all([
+          getColorById(activeColorId),
+          getColors()
+        ]);
 
-      if (currentColor) {
+        setColor(currentColor);
+
+        if (!currentColor) {
+          setPantones([]);
+          setRelatedColors([]);
+          setCollections([]);
+          setStories([]);
+          return;
+        }
+
         const [matchingCollections, colorStories] = await Promise.all([
           getCollectionsByColor(currentColor.hex),
           fetchColorStoriesByHex(currentColor.hex)
@@ -65,6 +76,8 @@ export default function ColorDetail({ colorId, onBack }) {
         setRelatedColors(findClosestColors(currentColor.hex, allColors || [], 4));
         setCollections(matchingCollections || []);
         setStories(colorStories || []);
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -115,8 +128,28 @@ export default function ColorDetail({ colorId, onBack }) {
     navigate("/color");
   }
 
-  if (!color) {
+  if (isLoading) {
     return <div style={{ padding: "60px" }}>Loading...</div>;
+  }
+
+  if (!color) {
+    return (
+      <div style={{ padding: "60px" }}>
+        <button
+          onClick={handleBackToColors}
+          style={{
+            marginBottom: "24px",
+            padding: "10px 18px",
+            border: "1px solid #ccc",
+            background: "#fff",
+            cursor: "pointer"
+          }}
+        >
+          ← Back to Colors
+        </button>
+        <p style={{ margin: 0 }}>Color not found.</p>
+      </div>
+    );
   }
 
   return (

@@ -5,7 +5,10 @@ export default function ColorCard({ name, hex, onDelete }) {
       <button
         type="button"
         className="delete-button"
-        onClick={onDelete}
+        onClick={(event) => {
+          event.stopPropagation();
+          onDelete?.();
+        }}
         aria-label={`Delete ${name}`}
       >
         ×
