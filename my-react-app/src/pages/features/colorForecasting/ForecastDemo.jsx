@@ -1,9 +1,10 @@
-import React from "react";
-import ForecastHero from "../components/forecast/ForecastHero";
-import MoodboardGrid from "../components/forecast/MoodboardGrid";
-import PaletteDisplay from "../components/forecast/PaletteDisplay";
-import ForecastSection from "../components/forecast/ForecastSection";
-import "../styles/forecast.css";
+import React, { useEffect, useState } from "react";
+import ForecastHero from "../../../components/forecast/ForecastHero";
+import MoodboardGrid from "../../../components/forecast/MoodboardGrid";
+import PaletteDisplay from "../../../components/forecast/PaletteDisplay";
+import ForecastSection from "../../../components/forecast/ForecastSection";
+import { getColors } from "./data/colorService";
+import "../../../styles/forecast.css";
 
 const moodboardImages = [
   {
@@ -44,19 +45,45 @@ const moodboardImages = [
   }
 ];
 
-const palette = [
-  { name: "Porcelain", hex: "#F2EEE7" },
-  { name: "Oat", hex: "#D7C8B6" },
-  { name: "Moss Ink", hex: "#6F7768" },
-  { name: "Graphite", hex: "#2D312F" }
-];
-
 export default function ForecastDemo() {
+  const [colors, setColors] = useState([]);
+  const [groupedColors, setGroupedColors] = useState({});
+  const [activeSeason, setActiveSeason] = useState("");
+
+  useEffect(() => {
+    async function loadColors() {
+      const data = await getColors();
+      const allColors = data || [];
+      const grouped = allColors.reduce((groups, color) => {
+        const season = color.season && color.season.trim()
+          ? color.season
+          : "Uncategorized";
+
+        if (!groups[season]) {
+          groups[season] = [];
+        }
+
+        groups[season].push(color);
+        return groups;
+      }, {});
+
+      setColors(allColors);
+      setGroupedColors(grouped);
+
+      const [firstSeason] = Object.keys(grouped);
+      if (firstSeason) {
+        setActiveSeason(firstSeason);
+      }
+    }
+
+    loadColors();
+  }, []);
+
   return (
     <main className="forecast-page">
       <ForecastHero />
       <MoodboardGrid images={moodboardImages} />
-      <PaletteDisplay colors={palette} />
+      <PaletteDisplay colors={groupedColors[activeSeason] || colors} />
       <ForecastSection
         title="Cultural Context"
         body="Consumers are shifting toward quieter forms of luxury, valuing tactile materials, emotional longevity, and pieces that feel grounded rather than performative. The visual language points to restraint, with focus placed on silhouette, texture, and atmosphere over overt novelty."

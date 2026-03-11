@@ -1,56 +1,74 @@
-import React, { useState } from "react";
-import ColorCard from "./ColorCard";
+import React, { useEffect, useState } from "react";
+import ColorDetail from "./ColorDetail";
+import ColorCard from "./components/ColorCard";
+import { deleteColor, fetchColors, insertColor } from "./data/colorService";
 import "./colorForecasting.css";
 
 export default function ColorForecasting() {
-  const [colors, setColors] = useState([
-    { name: "Soft Clay", hex: "#D8B8A6" },
-    { name: "Calm Sage", hex: "#B7C4B2" },
-    { name: "Dust Blue", hex: "#98A8BC" },
-    { name: "Warm Sand", hex: "#DDC9AB" }
-  ]);
+  const [colors, setColors] = useState([]);
+  const [selectedColorId, setSelectedColorId] = useState(null); 
 
   const [newName, setNewName] = useState("");
+  const [newSeason, setNewSeason] = useState("");
   const [newHex, setNewHex] = useState("#000000");
   const [hexInput, setHexInput] = useState("#000000");
   const [hexError, setHexError] = useState("");
   const isValidHex = /^#[0-9A-Fa-f]{6}$/;
+
+  async function loadColors() {
+    const data = await fetchColors();
+    setColors(data || []);
+  }
+
+  useEffect(() => {
+    loadColors();
+  }, []);
+
+  //  If a color is selected, render ColorDetail instead
+  if (selectedColorId) {
+    return (
+      <ColorDetail
+        colorId={selectedColorId}
+        onBack={() => setSelectedColorId(null)}
+      />
+    );
+  }
+
+  const groupedColors = colors.reduce((groups, color) => {
+    const season =
+      color.season && color.season.trim()
+        ? color.season
+        : "Uncategorized";
+
+    if (!groups[season]) {
+      groups[season] = [];
+    }
+
+    groups[season].push(color);
+    return groups;
+  }, {});
 
   return (
     <main className="color-page">
       <section className="hero">
         <div className="hero-text">
           <p className="small-label">Color Forecasting</p>
-          <h1>Simple Layout Practice Page</h1>
-          <p>
-            This page is built with one React component so you can focus on
-            learning basic structure and CSS layout.
-          </p>
-        </div>
-      </section>
-
-      <section className="two-column-section">
-        <div className="column-box">
-          <h2>Left Column</h2>
-          <p>
-            This is the first column. You can use a grid to place content side
-            by side.
-          </p>
-        </div>
-
-        <div className="column-box">
-          <h2>Right Column</h2>
-          <p>
-            This is the second column. On smaller screens, the columns will
-            stack on top of each other.
+          <h1>Seasonal Color Forecasting</h1>
+          <p className="hero-copy">
+            Build and explore seasonal colors used across forecasting palettes.
           </p>
         </div>
       </section>
 
       <section className="card-section">
-        <p className="small-label">Color Cards</p>
-        <h2>Simple Color Grid</h2>
-
+        <div className="section-divider" aria-hidden="true" />
+        <div className="section-header">
+          <p className="small-label">Color Library</p>
+          <h2>COLOR LIBRARY</h2>
+          <p className="hero-copy">
+            Explore seasonal colors used in forecasting palettes.
+          </p>
+        </div>
 
         <div className="color-form">
           <div className="form-field name-field">
@@ -59,6 +77,15 @@ export default function ColorForecasting() {
               placeholder="Color Name"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
+            />
+          </div>
+
+          <div className="form-field name-field">
+            <input
+              type="text"
+              placeholder="Season"
+              value={newSeason}
+              onChange={(e) => setNewSeason(e.target.value)}
             />
           </div>
 
@@ -100,15 +127,21 @@ export default function ColorForecasting() {
           </div>
 
           <button
-            onClick={() => {
+            onClick={async () => {
               if (!newName.trim()) return;
 
-              setColors([
-                ...colors,
-                { name: newName, hex: newHex }
-              ]);
+              const didInsert = await insertColor({
+                name: newName,
+                hex: newHex,
+                season: newSeason.trim() || null
+              });
+
+              if (!didInsert) return;
+
+              await loadColors();
 
               setNewName("");
+              setNewSeason("");
               setNewHex("#000000");
               setHexInput("#000000");
               setHexError("");
@@ -118,18 +151,31 @@ export default function ColorForecasting() {
           </button>
         </div>
 
-        <div className="card-grid">
-          {colors.map((color, index) => (
-            <ColorCard
-              key={index}
-              name={color.name}
-              hex={color.hex}
-              onDelete={() => {
-                setColors(colors.filter((_, colorIndex) => colorIndex !== index));
-              }}
-            />
-          ))}
-        </div>
+        {Object.entries(groupedColors).map(([season, seasonColors]) => (
+          <div key={season}>
+            <h3>{season}</h3>
+            <div className="card-grid">
+              {seasonColors.map((color) => (
+                <div
+                  key={color.id}
+                  onClick={() => setSelectedColorId(color.id)} //  click handler
+                  style={{ cursor: "pointer" }}
+                >
+                  <ColorCard
+                    id={color.id}
+                    name={color.name}
+                    hex={color.hex}
+                    onDelete={async () => {
+                      const didDelete = await deleteColor(color.id);
+                      if (!didDelete) return;
+                      await loadColors();
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </section>
     </main>
   );
