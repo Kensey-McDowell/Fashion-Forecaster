@@ -1,10 +1,17 @@
 import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import ColorDetail from "./ColorDetail";
 import ColorCard from "./components/ColorCard";
-import { deleteColor, fetchColors, insertColor } from "./data/colorService";
+import {
+  deleteColor,
+  fetchColors,
+  insertColor,
+  updateColorName
+} from "./data/colorService";
 import "./colorForecasting.css";
 
 export default function ColorForecasting() {
+  const location = useLocation();
   const [colors, setColors] = useState([]);
   const [selectedColorId, setSelectedColorId] = useState(null); 
 
@@ -16,13 +23,88 @@ export default function ColorForecasting() {
   const isValidHex = /^#[0-9A-Fa-f]{6}$/;
 
   async function loadColors() {
-    const data = await fetchColors();
-    setColors(data || []);
+    try {
+      const data = await fetchColors();
+      setColors(data || []);
+    } catch (error) {
+      console.error("Unable to load colors:", error);
+      setColors([]);
+    }
+  }
+
+  async function handleRenameColor(color) {
+    const nextName = window.prompt("Rename color", color.name);
+
+    if (nextName === null) {
+      return;
+    }
+
+    const trimmedName = nextName.trim();
+
+    if (!trimmedName || trimmedName === color.name) {
+      return;
+    }
+
+    try {
+      const didUpdate = await updateColorName(color.id, trimmedName);
+
+      if (!didUpdate) {
+        return;
+      }
+
+      await loadColors();
+    } catch (error) {
+      console.error("Unable to rename color:", error);
+    }
+  }
+
+  async function handleDuplicateColor(color) {
+    try {
+      const didInsert = await insertColor({
+        name: `${color.name} Copy`,
+        hex: color.hex,
+        season: color.season || null
+      });
+
+      if (!didInsert) {
+        return;
+      }
+
+      await loadColors();
+    } catch (error) {
+      console.error("Unable to duplicate color:", error);
+    }
+  }
+
+  async function handleDeleteColor(color) {
+    const shouldDelete = window.confirm(`Delete "${color.name}"?`);
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      const didDelete = await deleteColor(color.id);
+
+      if (!didDelete) {
+        return;
+      }
+
+      await loadColors();
+    } catch (error) {
+      console.error("Unable to delete color:", error);
+    }
   }
 
   useEffect(() => {
     loadColors();
   }, []);
+
+  useEffect(() => {
+    if (location.state?.selectedColorId) {
+      setSelectedColorId(location.state.selectedColorId);
+    }
+  }, [location.state]);
 
   //  If a color is selected, render ColorDetail instead
   if (selectedColorId) {
@@ -165,11 +247,10 @@ export default function ColorForecasting() {
                     id={color.id}
                     name={color.name}
                     hex={color.hex}
-                    onDelete={async () => {
-                      const didDelete = await deleteColor(color.id);
-                      if (!didDelete) return;
-                      await loadColors();
-                    }}
+                    onRename={() => handleRenameColor(color)}
+                    onDuplicate={() => handleDuplicateColor(color)}
+                    onViewDetails={() => setSelectedColorId(color.id)}
+                    onDelete={() => handleDeleteColor(color)}
                   />
                 </div>
               ))}

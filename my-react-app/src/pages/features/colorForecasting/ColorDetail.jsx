@@ -7,7 +7,7 @@ import {
 } from "./data/colorService";
 import {
   createColorStory,
-  fetchColorStoriesByHex
+  fetchColorStoriesByColor
 } from "./data/colorStoryService";
 import {
   addColorToBoard,
@@ -30,13 +30,20 @@ export default function ColorDetail({ colorId, onBack }) {
   const [collections, setCollections] = useState([]);
   const [trendBoards, setTrendBoards] = useState([]);
   const [selectedBoardId, setSelectedBoardId] = useState("");
+  const [storyError, setStoryError] = useState("");
+  const [isSavingStory, setIsSavingStory] = useState(false);
 
   useEffect(() => {
     async function loadTrendBoards() {
-      const boards = await getTrendBoards();
-      setTrendBoards(boards || []);
-      if ((boards || []).length > 0) {
-        setSelectedBoardId(boards[0].id);
+      try {
+        const boards = await getTrendBoards();
+        setTrendBoards(boards || []);
+        if ((boards || []).length > 0) {
+          setSelectedBoardId(boards[0].id);
+        }
+      } catch (error) {
+        console.error("Unable to load trend boards:", error);
+        setTrendBoards([]);
       }
     }
 
@@ -69,7 +76,7 @@ export default function ColorDetail({ colorId, onBack }) {
 
         const [matchingCollections, colorStories] = await Promise.all([
           getCollectionsByColor(currentColor.hex),
-          fetchColorStoriesByHex(currentColor.hex)
+          fetchColorStoriesByColor(currentColor.id)
         ]);
 
         setPantones(findClosestPantones(currentColor.hex, pantoneColors, 3));
@@ -86,21 +93,38 @@ export default function ColorDetail({ colorId, onBack }) {
 
   async function handleSubmit(event) {
     event.preventDefault();
+    setStoryError("");
 
-    const story = await createColorStory({
-      color_hex: color.hex,
-      narrative,
-      design_application: designApplication,
-      fabric_suggestions: fabricSuggestions
-    });
+    if (!color) {
+      return;
+    }
 
-    if (!story) return;
+    setIsSavingStory(true);
 
-    const colorStories = await fetchColorStoriesByHex(color.hex);
-    setStories(colorStories || []);
-    setNarrative("");
-    setDesignApplication("");
-    setFabricSuggestions("");
+    try {
+      const story = await createColorStory({
+        color_id: color.id,
+        narrative,
+        design_application: designApplication,
+        fabric_suggestions: fabricSuggestions
+      });
+
+      if (!story) {
+        setStoryError("Unable to save story.");
+        return;
+      }
+
+      const colorStories = await fetchColorStoriesByColor(color.id);
+      setStories(colorStories || []);
+      setNarrative("");
+      setDesignApplication("");
+      setFabricSuggestions("");
+    } catch (error) {
+      console.error("Unable to save color story:", error);
+      setStoryError("Unable to save story.");
+    } finally {
+      setIsSavingStory(false);
+    }
   }
 
   async function handleAddToTrendBoard() {
@@ -242,6 +266,7 @@ export default function ColorDetail({ colorId, onBack }) {
               </button>
               <Link
                 to="/trend-boards"
+                state={{ fromColorId: color.id }}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -477,18 +502,25 @@ export default function ColorDetail({ colorId, onBack }) {
             style={{ padding: "14px" }}
           />
 
+          {storyError && (
+            <p style={{ margin: 0, color: "#b42318" }}>
+              {storyError}
+            </p>
+          )}
+
           <button
             type="submit"
+            disabled={isSavingStory}
             style={{
               width: "fit-content",
               padding: "14px 24px",
               border: "1px solid #000",
-              background: "#000",
+              background: isSavingStory ? "#444" : "#000",
               color: "#fff",
-              cursor: "pointer"
+              cursor: isSavingStory ? "default" : "pointer"
             }}
           >
-            Save Story
+            {isSavingStory ? "Saving..." : "Save Story"}
           </button>
         </form>
       </section>

@@ -58,6 +58,34 @@ export async function createTrendBoard({ name, season, year }) {
   return data;
 }
 
+export async function updateTrendBoardName(boardId, name) {
+  const { error } = await supabase
+    .from("trend_boards")
+    .update({ name: name.trim() })
+    .eq("id", boardId);
+
+  if (error) {
+    console.error("Update trend board name error:", error);
+    return false;
+  }
+
+  return true;
+}
+
+export async function deleteTrendBoard(boardId) {
+  const { error } = await supabase
+    .from("trend_boards")
+    .delete()
+    .eq("id", boardId);
+
+  if (error) {
+    console.error("Delete trend board error:", error);
+    return false;
+  }
+
+  return true;
+}
+
 export async function addColorToBoard(boardId, colorId) {
   const { data, error } = await supabase
     .from("trend_board_colors")

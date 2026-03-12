@@ -1,7 +1,7 @@
 import { supabase } from "../../../../lib/supabaseClient";
 
 export async function createColorStory({
-  color_hex,
+  color_id,
   narrative,
   design_application,
   fabric_suggestions
@@ -10,7 +10,7 @@ export async function createColorStory({
     .from("color_stories")
     .insert([
       {
-        color_hex,
+        color_id,
         narrative,
         design_application,
         fabric_suggestions
@@ -27,15 +27,15 @@ export async function createColorStory({
   return data;
 }
 
-export async function fetchColorStoriesByHex(colorHex) {
+export async function fetchColorStoriesByColor(colorId) {
   const { data, error } = await supabase
     .from("color_stories")
     .select("*")
-    .eq("color_hex", colorHex)
+    .eq("color_id", colorId)
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Fetch color stories by hex error:", error);
+    console.error("Fetch color stories by color error:", error);
     return [];
   }
 

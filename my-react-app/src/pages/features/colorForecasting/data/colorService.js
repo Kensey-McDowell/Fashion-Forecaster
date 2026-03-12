@@ -99,6 +99,20 @@ export async function insertColor(color) {
   return true;
 }
 
+export async function updateColorName(id, name) {
+  const { error } = await supabase
+    .from("colors")
+    .update({ name })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Update color name error:", error);
+    return false;
+  }
+
+  return true;
+}
+
 export async function deleteColor(id) {
   const { error } = await supabase
     .from("colors")

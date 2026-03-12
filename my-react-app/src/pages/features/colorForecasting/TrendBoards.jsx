@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import CreateBoardModal from "../../../components/CreateBoardModal";
+import BoardCard from "./components/BoardCard";
 import {
   createTrendBoard,
-  getTrendBoards
+  deleteTrendBoard,
+  getTrendBoards,
+  updateTrendBoardName
 } from "./services/trendBoardService";
 
 export default function TrendBoards() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [boards, setBoards] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [hoveredBoardId, setHoveredBoardId] = useState(null);
@@ -15,8 +20,13 @@ export default function TrendBoards() {
   const [year, setYear] = useState("");
 
   async function loadBoards() {
-    const data = await getTrendBoards();
-    setBoards(data || []);
+    try {
+      const data = await getTrendBoards();
+      setBoards(data || []);
+    } catch (error) {
+      console.error("Unable to load boards:", error);
+      setBoards([]);
+    }
   }
 
   useEffect(() => {
@@ -43,6 +53,70 @@ export default function TrendBoards() {
     setIsModalOpen(false);
   }
 
+  async function handleRenameBoard(board) {
+    const nextName = window.prompt("Rename board", board.name);
+
+    if (nextName === null) {
+      return;
+    }
+
+    const trimmedName = nextName.trim();
+
+    if (!trimmedName || trimmedName === board.name) {
+      return;
+    }
+
+    try {
+      const didUpdate = await updateTrendBoardName(board.id, trimmedName);
+
+      if (!didUpdate) {
+        return;
+      }
+
+      await loadBoards();
+    } catch (error) {
+      console.error("Unable to rename board:", error);
+    }
+  }
+
+  async function handleDuplicateBoard(board) {
+    try {
+      const createdBoard = await createTrendBoard({
+        name: `${board.name} Copy`,
+        season: board.season,
+        year: board.year
+      });
+
+      if (!createdBoard) {
+        return;
+      }
+
+      await loadBoards();
+    } catch (error) {
+      console.error("Unable to duplicate board:", error);
+    }
+  }
+
+  async function handleDeleteBoard(board) {
+    const shouldDelete = window.confirm(`Delete "${board.name}"?`);
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      const didDelete = await deleteTrendBoard(board.id);
+
+      if (!didDelete) {
+        return;
+      }
+
+      await loadBoards();
+    } catch (error) {
+      console.error("Unable to delete board:", error);
+    }
+  }
+
   const canCreateBoard = Boolean(name.trim() && season.trim() && year !== "");
 
   return (
@@ -62,6 +136,37 @@ export default function TrendBoards() {
       )}
 
       <section style={{ marginBottom: "72px" }}>
+        <button
+          type="button"
+          onClick={() => navigate("/forecasting")}
+          style={{
+            marginBottom: "28px",
+            padding: "10px 18px",
+            border: "1px solid #ccc",
+            background: "#fff",
+            cursor: "pointer"
+          }}
+        >
+          ← Back to Forecasting
+        </button>
+
+        {location.state?.fromColorId && (
+          <button
+            type="button"
+            onClick={() => navigate("/color", {
+              state: { selectedColorId: location.state.fromColorId }
+            })}
+            style={{
+              marginBottom: "28px",
+              padding: "10px 18px",
+              border: "1px solid #ccc",
+              background: "#fff",
+              cursor: "pointer"
+            }}
+          >
+            ← Back to Color
+          </button>
+        )}
         <div
           style={{
             display: "flex",
@@ -118,47 +223,17 @@ export default function TrendBoards() {
           }}
         >
           {boards.map((board) => (
-            <Link
+            <BoardCard
               key={board.id}
-              to={`/boards/${board.id}`}
+              board={board}
+              isHovered={hoveredBoardId === board.id}
               onMouseEnter={() => setHoveredBoardId(board.id)}
               onMouseLeave={() => setHoveredBoardId(null)}
-              style={{
-                padding: "28px",
-                border: "1px solid #e5dfd7",
-                background: "#faf8f5",
-                color: "inherit",
-                textDecoration: "none",
-                minHeight: "220px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                cursor: "pointer",
-                transform: hoveredBoardId === board.id ? "translateY(-2px)" : "translateY(0)",
-                boxShadow: hoveredBoardId === board.id
-                  ? "0 10px 24px rgba(17, 17, 17, 0.06)"
-                  : "none",
-                transition: "transform 0.18s ease, box-shadow 0.18s ease"
-              }}
-            >
-              <p
-                style={{
-                  margin: "0 0 10px",
-                  color: "#777",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.16em",
-                  fontSize: "12px"
-                }}
-              >
-                {String(board.season).toUpperCase()} {board.year}
-              </p>
-              <h3 style={{ margin: 0, fontSize: "28px", lineHeight: 1.1 }}>
-                {board.name}
-              </h3>
-              <p style={{ margin: "18px 0 0", color: "#666", fontSize: "14px" }}>
-                {board.colorCount || 0} {(board.colorCount || 0) === 1 ? "Color" : "Colors"}
-              </p>
-            </Link>
+              onViewDetails={() => navigate(`/boards/${board.id}`)}
+              onRename={() => handleRenameBoard(board)}
+              onDuplicate={() => handleDuplicateBoard(board)}
+              onDelete={() => handleDeleteBoard(board)}
+            />
           ))}
         </div>
       </section>

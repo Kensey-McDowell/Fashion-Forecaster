@@ -1,18 +1,23 @@
 import React from "react";
-export default function ColorCard({ name, hex, onDelete }) {
+import ColorActionMenu from "./ColorActionMenu";
+
+export default function ColorCard({
+  name,
+  hex,
+  onRename,
+  onDuplicate,
+  onViewDetails,
+  onDelete
+}) {
   return (
     <article className="color-card">
-      <button
-        type="button"
-        className="delete-button"
-        onClick={(event) => {
-          event.stopPropagation();
-          onDelete?.();
-        }}
-        aria-label={`Delete ${name}`}
-      >
-        ×
-      </button>
+      <ColorActionMenu
+        colorName={name}
+        onRename={onRename}
+        onDuplicate={onDuplicate}
+        onViewDetails={onViewDetails}
+        onDelete={onDelete}
+      />
       <div
         className="color-swatch"
         style={{ backgroundColor: hex }}

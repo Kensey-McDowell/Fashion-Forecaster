@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { getColors } from "./data/colorService";
 import {
   addColorToBoard,
@@ -8,21 +8,34 @@ import {
 } from "./services/trendBoardService";
 
 export default function TrendBoardDetail() {
+  const navigate = useNavigate();
   const { boardId } = useParams();
   const [board, setBoard] = useState(null);
   const [boardColors, setBoardColors] = useState([]);
   const [allColors, setAllColors] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   async function loadBoardDetail() {
-    const [boards, colorsOnBoard, colors] = await Promise.all([
-      getTrendBoards(),
-      getBoardColors(boardId),
-      getColors()
-    ]);
+    setIsLoading(true);
 
-    setBoard((boards || []).find((item) => item.id === boardId) || null);
-    setBoardColors(colorsOnBoard || []);
-    setAllColors(colors || []);
+    try {
+      const [boards, colorsOnBoard, colors] = await Promise.all([
+        getTrendBoards(),
+        getBoardColors(boardId),
+        getColors()
+      ]);
+
+      setBoard((boards || []).find((item) => item.id === boardId) || null);
+      setBoardColors(colorsOnBoard || []);
+      setAllColors(colors || []);
+    } catch (error) {
+      console.error("Unable to load board detail:", error);
+      setBoard(null);
+      setBoardColors([]);
+      setAllColors([]);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -30,17 +43,42 @@ export default function TrendBoardDetail() {
   }, [boardId]);
 
   async function handleAddColor(colorId) {
-    const entry = await addColorToBoard(boardId, colorId);
+    try {
+      const entry = await addColorToBoard(boardId, colorId);
 
-    if (!entry) {
-      return;
+      if (!entry) {
+        return;
+      }
+
+      await loadBoardDetail();
+    } catch (error) {
+      console.error("Unable to add color to board:", error);
     }
+  }
 
-    await loadBoardDetail();
+  if (isLoading) {
+    return <div style={{ padding: "60px" }}>Loading...</div>;
   }
 
   if (!board) {
-    return <div style={{ padding: "60px" }}>Loading...</div>;
+    return (
+      <div style={{ padding: "60px" }}>
+        <button
+          type="button"
+          onClick={() => navigate("/trend-boards")}
+          style={{
+            marginBottom: "24px",
+            padding: "10px 18px",
+            border: "1px solid #ccc",
+            background: "#fff",
+            cursor: "pointer"
+          }}
+        >
+          ← Back to Boards
+        </button>
+        <p style={{ margin: 0 }}>Board not found.</p>
+      </div>
+    );
   }
 
   const existingColorIds = new Set(boardColors.map((color) => color.id));
@@ -48,6 +86,19 @@ export default function TrendBoardDetail() {
   return (
     <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "80px 24px" }}>
       <section style={{ marginBottom: "72px" }}>
+        <button
+          type="button"
+          onClick={() => navigate("/trend-boards")}
+          style={{
+            marginBottom: "28px",
+            padding: "10px 18px",
+            border: "1px solid #ccc",
+            background: "#fff",
+            cursor: "pointer"
+          }}
+        >
+          ← Back to Boards
+        </button>
         <p
           style={{
             margin: "0 0 12px",
@@ -102,8 +153,14 @@ export default function TrendBoardDetail() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-            gap: "28px"
+            gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+            gap: "20px",
+            alignItems: "start",
+            width: "100%",
+            maxHeight: "720px",
+            overflowY: "auto",
+            overflowX: "hidden",
+            paddingRight: "8px"
           }}
         >
           {allColors.map((color) => (
@@ -111,13 +168,14 @@ export default function TrendBoardDetail() {
               key={color.id}
               style={{
                 border: "1px solid #e5dfd7",
-                background: "#ffffff"
+                background: "#ffffff",
+                minWidth: 0
               }}
             >
               <div
                 style={{
                   width: "100%",
-                  height: "160px",
+                  height: "140px",
                   backgroundColor: color.hex
                 }}
               />
