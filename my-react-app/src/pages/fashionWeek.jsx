@@ -579,9 +579,9 @@ more: [
                     "fall2025": ["rtw","resort"], "spring2025": ["rtw","resort"], 
                     "fall2024": ["rtw","resort"], "spring2024": ["rtw","resort"] },
 
-      seasons: ["fall2026", "spring2026", 
-                "fall2025", "spring2025", 
-                "fall2024", "spring2024"],
+      seasons:     ["fall2026", "spring2026", 
+                    "fall2025", "spring2025", 
+                    "fall2024", "spring2024"],
 
       subcategories: {
                   "fall2026/rtw":   ["women","men"], "spring2026/rtw":   ["women","men"],
@@ -624,7 +624,7 @@ more: [
                     "fall2025":["rtw"], "spring2025":["rtw"], 
                     "fall2024":["rtw"], "spring2024":["rtw"] },
 
-      seasons: ["fall2026", "spring2026",
+      seasons:["fall2026", "spring2026",
                "fall2025", "spring2025", 
                "fall2024", "spring2024"],
       subcategories: {
@@ -639,11 +639,11 @@ more: [
 
 // ── VOGUE URL BUILDER ─────────────────────────────────────────────────────────
 // URL patterns:
-// women's RTW:      /fall-2026-ready-to-wear/brand
-// women's Couture:  /spring-2026-couture/brand
-// women's Resort:   /resort-2026/brand
+// women's RTW:/fall-2026-ready-to-wear/brand
+// women's Couture:/spring-2026-couture/brand
+// women's Resort:/resort-2026/brand
 // men's RTW/Couture:/fall-2026-menswear/brand
-// men's Resort:     /resort-2026-menswear/brand
+// men's Resort:/resort-2026-menswear/brand
 
 const VOGUE_SEASON = {
   fall2026:   "fall-2026",
@@ -660,7 +660,7 @@ const VOGUE_SEASON = {
 };
 
 const VOGUE_SLUG = {
-  // New York
+  //New York
   "Area":                    "area",
   "Coach":                   "coach",
   "Maria McManus":           "maria-mcmanus",
@@ -669,14 +669,14 @@ const VOGUE_SLUG = {
   "Ralph Lauren":            "ralph-lauren",
   "Tory Burch":              "tory-burch",
   "Ulla Johnson":            "ulla-johnson",
-  // London
+  //London
   "Burberry":                "burberry-prorsum",
   "Erdem":                   "erdem",
   "Simone Rocha":            "simone-rocha",
   "JW Anderson":             "j-w-anderson",
   "Roksanda":                "roksanda",
   "Victoria Beckham":        "victoria-beckham",
-  // Milan
+  //Milan
   "Gucci":                   "gucci",
   "Prada":                   "prada",
   "Fendi":                   "fendi",

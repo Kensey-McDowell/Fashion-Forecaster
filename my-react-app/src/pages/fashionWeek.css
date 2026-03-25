@@ -1,11 +1,9 @@
-
-<<<<<<< HEAD
-  *, *::before, *::after{
+*, *::before, *::after{
     box-sizing: border-box; margin: 0; padding: 0;
   }
 
   /* WELCOME SECTION */
-  .welcome_header {
+  .welcome_header{
     text-align: center;
     padding: 40px;
     border-bottom: 1px solid #d7d4d4;
@@ -28,13 +26,13 @@
     margin-bottom: 25px;
   }
 
-  .welcome_filter_word {
+  .welcome_filter_word{
     display: flex;
     flex-direction: column;
     align-items: flex-start;   
   }
 
-  .welcome_filter_label {
+  .welcome_filter_label{
     font-size: 8px;
     letter-spacing: 2px;
     text-transform: uppercase;
@@ -43,7 +41,7 @@
     margin-bottom: 5px;
   }
 
-  .welcome_select_word {
+  .welcome_select_word{
     appearance: none;
     -webkit-appearance: none;
     font-size: 10px;
@@ -58,10 +56,12 @@
     transition: border-color 0.15s;
   }
   .welcome_select_word:focus{
-    outline: none; border-color: #111;
+    outline: none; 
+    border-color: #111;
   }
 
-  .welcome_select_word:hover{border-color: #4a4747;
+  .welcome_select_word:hover{
+    border-color: #4a4747;
   }
 
   /* display selected categories */
@@ -72,7 +72,10 @@
     color: #515050;
     margin-bottom: 25px;
   }
-  .welcome_selected_word span { color: #111; font-weight: 500; }
+  .welcome_selected_word span { 
+    color: #111; 
+    font-weight: 500; 
+  }
 
   /* Display collection grid */
   .collection_grid {
@@ -136,8 +139,14 @@
   }
 
   @keyframes cardUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0; 
+      transform: translateY(16px); 
+    }
+    to{ 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
   }
 
   
@@ -153,7 +162,7 @@
     line-height: 1; 
   }
 
-  .designer_name { 
+  .designer_name{ 
     position: absolute; 
     bottom: 0.65rem; 
     left: 0;
@@ -171,7 +180,7 @@
     padding: 25px 15px; 
   }
 
-  .designer_header { 
+  .designer_header{ 
     text-align: center; 
     margin-bottom: 2rem; 
   }
@@ -196,6 +205,3 @@
     display: grid; 
     grid-template-columns: repeat(4, 1fr); 
   }
-
-=======
->>>>>>> 37a28ae23271085ce314b877409e2bc34aabf8c7
