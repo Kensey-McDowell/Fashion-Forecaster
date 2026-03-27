@@ -25,7 +25,7 @@ export default function Navbar({ isLoggedIn }) {
           <div className="dropdown">
             <button className="dropbtn">Reviews</button>
             <div className="dropdown-content">
-              <Link to="/fashion">Fashion Week</Link>
+              <Link to="/fashionWeek">Fashion Week</Link>
               <Link to="/street">Street Style</Link>
             </div>
           </div>
