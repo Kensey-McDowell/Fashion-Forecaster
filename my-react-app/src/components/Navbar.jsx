@@ -2,11 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './Navbar.css';
 
-<<<<<<< HEAD
 export default function Navbar({ isLoggedIn }) {
-=======
-export default function Navbar() {
->>>>>>> origin/jennifer_branch
   return (
     <nav className="navbar">
       <div className="nav-container">
@@ -33,7 +29,6 @@ export default function Navbar() {
               <Link to="/street">Street Style</Link>
             </div>
           </div>
-<<<<<<< HEAD
           
           <Link to="/about">About Us</Link>
           <Link to="/collage">Create</Link>
@@ -42,12 +37,6 @@ export default function Navbar() {
             {isLoggedIn ? "PROFILE" : "SIGN IN"}
           </Link>
         </div>
-=======
-          <Link to="/about">About Us</Link>
-        </div>
-
-        <div className="nav-links"><Link to="collage">Create</Link></div>
->>>>>>> origin/jennifer_branch
       </div>
     </nav>
   );

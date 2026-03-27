@@ -2,6 +2,9 @@
   --pantone-black: #000000;
   --pantone-white: #ffffff;
   --pantone-gray: #f2f2f2;
+  --pantone-black: #000000;
+  --pantone-white: #ffffff;
+  --pantone-gray: #f2f2f2;
 }
 
 body {
@@ -11,15 +14,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-<<<<<<< HEAD
 h1, h2, h3 {
   text-transform: uppercase;
   letter-spacing: -0.05em; 
 }
-=======
-/* Editorial-style headings */
-h1, h2, h3 {
-  text-transform: uppercase;
-  letter-spacing: -0.05em; 
-}
->>>>>>> origin/jennifer_branch

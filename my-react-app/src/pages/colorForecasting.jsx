@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabase";
 import "./colorForecasting.css";
@@ -140,16 +139,6 @@ export default function ColorForecasting() {
 
       </div>
 
-=======
-import React from 'react'; 
-import "./colorForecasting.css";
-
-export default function ColorPage() {
-  return (
-    <div className="p-10">
-      <h1>This is the color forecasting page</h1>
-      <p>Start building your content here.</p>
->>>>>>> origin/jennifer_branch
     </div>
   );
 }
