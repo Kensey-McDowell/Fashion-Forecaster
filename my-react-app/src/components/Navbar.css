@@ -28,15 +28,15 @@
 }
 
 .logo-thin {
-  font-weight: 200; 
-  letter-spacing: 0px; 
+  font-weight: 200;
+  letter-spacing: 0px;
   opacity: 0.9;
 }
 
 .nav-links {
   display: flex;
   gap: 30px;
-  align-items: center; 
+  align-items: center;
 }
 
 .nav-links a, .dropbtn {
@@ -46,11 +46,11 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
-  padding: 0; 
+  padding: 0;
   margin: 0;
   display: flex;
   align-items: center;
-  height: 100%; 
+  height: 100%;
 }
 
 .nav-links a:hover {
@@ -66,27 +66,27 @@
 .dropbtn {
   background: none;
   border: none;
-  color: var(--pantone-black); 
+  color: var(--pantone-black);
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
   cursor: pointer;
   padding: 10px 0;
-  font-family: inherit; 
+  font-family: inherit;
 }
 
 /* Hidden by default */
 .dropdown-content {
   display: none;
   position: absolute;
-  background-color: var(--pantone-white); 
+  background-color: var(--pantone-white);
   min-width: 220px;
-  border: 1px solid var(--pantone-black); 
+  border: 1px solid var(--pantone-black);
   z-index: 1001;
-  top: 100%; 
+  top: 100%;
   left: 0;
-  box-shadow: 0px 8px 16px rgba(0,0,0,0.05); 
+  box-shadow: 0px 8px 16px rgba(0,0,0,0.05);
 }
 
 /* Individual links inside the dropdown */
@@ -98,7 +98,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  border-bottom: 1px solid #f2f2f2; 
+  border-bottom: 1px solid #f2f2f2;
 }
 
 /* Remove border from the last item */
@@ -108,10 +108,10 @@
 
 /* Hover effects */
 .dropdown:hover .dropdown-content {
-  display: block; 
+  display: block;
 }
 
 .dropdown-content a:hover {
   background-color: #f9f9f9;
-  opacity: 0.6; 
+  opacity: 0.6;
 }
