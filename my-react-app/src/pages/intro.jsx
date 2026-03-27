@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState, useEffect, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import Butterfly from '../components/Butterfly.jsx'
@@ -169,4 +170,16 @@ export default function IntroPage() {
       </div>
     </div>
   )
+=======
+import React from 'react'; 
+import "./intro.css";
+
+export default function IntroPage() {
+  return (
+    <div>
+      <h1>This is the intro page</h1>
+      <p>Start building your content here.</p>
+    </div>
+  );
+>>>>>>> origin/jennifer_branch
 }

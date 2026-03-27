@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState, useRef, useEffect } from 'react';
 import { Stage, Layer, Rect } from 'react-konva';
 import CollageBox from '../components/collageBox.jsx';
@@ -219,6 +220,16 @@ export default function CollagePage() {
           </Stage>
         </div>
       </main>
+=======
+import React from 'react'; 
+import "./collageCreator.css";
+
+export default function CollagePage() {
+  return (
+    <div>
+      <h1>This is the collage creator page</h1>
+      <p>Start building your content here.</p>
+>>>>>>> origin/jennifer_branch
     </div>
   );
 }
