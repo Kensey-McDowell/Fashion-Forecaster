@@ -1,0 +1,98 @@
+.footer-wrapper {
+  background-color: #000000;
+  color: #ffffff;
+  width: 100vw;
+  padding: 80px 0 40px 0;
+  margin-top: auto;
+  padding-bottom: 0;
+}
+
+/* Centers content */
+.footer-content {
+  margin: 0 auto; 
+  padding: 0 40px;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr; 
+  gap: 60px;
+}
+
+.footer-col {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Logo and Text Styling */
+.footer-logo {
+  font-size: 24px;
+  font-weight: 900;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+
+.logo-thin {
+  font-weight: 200;
+  opacity: 0.8;
+}
+
+.footer-text {
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 300px;
+  color: #cccccc;
+}
+
+/* Label/Heading styling */
+.footer-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #666666; 
+  margin-bottom: 25px;
+}
+
+.footer-list {
+  list-style: none; 
+  padding: 0;
+  margin: 0;
+}
+
+.footer-list li {
+  margin-bottom: 12px; 
+}
+
+.footer-list li a {
+  text-decoration: none; 
+  color: #ffffff;       
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: opacity 0.2s ease;
+}
+
+.footer-list li a:hover {
+  opacity: 0.5; 
+}
+
+/* The Copyright Bar */
+.footer-bottom-bar {
+  max-width: 1400px;
+  margin: 60px auto 0 auto;
+  padding: 30px 40px 0 40px;
+  border-top: 1px solid #222222; 
+  text-align: left;
+}
+
+.footer-bottom-bar p {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #444444;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .footer-content {
+    grid-template-columns: 1fr; /* Stack columns on small screens */
+    gap: 40px;
+  }
+}
