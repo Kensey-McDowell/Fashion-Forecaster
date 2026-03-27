@@ -5,12 +5,15 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import IntroPage from "./pages/intro.jsx";
 import AboutPage from "./pages/about.jsx";
 import CollagePage from "./pages/collageCreator.jsx";
-import ColorPage from "./pages/colorForecasting.jsx";
+import ColorPage from "./pages/features/colorForecasting/colorForecasting.jsx";
 import MarketPage from "./pages/marketResearch.jsx";
 import StreetStylePage from "./pages/streetStyle.jsx";
 import TrendPage from "./pages/trendForecasting.jsx";
 import FashionPage from "./pages/fashionWeek.jsx";
-import TestPage from "./pages/test.jsx"; 
+import TestPage from "./pages/test.jsx";
+import ForecastDemo from "./pages/features/colorForecasting/ForecastDemo.jsx";
+import TrendBoards from "./pages/features/colorForecasting/TrendBoards.jsx";
+import TrendBoardDetail from "./pages/features/colorForecasting/TrendBoardDetail.jsx"; 
 import SignPage from "./pages/signIn.jsx";
 import UserProfile from "./pages/userProfile.jsx"; 
 
