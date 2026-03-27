@@ -16,8 +16,7 @@
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
-  background: #f8f5ef;
-  color: #171717;
+  color: var(--pantone-black);
 }
 
 .hero {

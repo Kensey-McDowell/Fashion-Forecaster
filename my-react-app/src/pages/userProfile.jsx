@@ -26,7 +26,7 @@ export default function UserProfile({ user, onLogout }) {
         {/* STUDENT HEADER */}
         <header className="profile-header">
           <p className="overline">STUDENT ARCHIVE</p>
-          <h1 className="user-name">{user?.name || "Kensey McDowell"}</h1>
+          <h1 className="user-name" style={{textAlign: 'left'}}>{user?.name || "Kensey McDowell"}</h1>
           <p className="user-role">FASHION STUDENT — ID: 2026-X94</p>
         </header>
 

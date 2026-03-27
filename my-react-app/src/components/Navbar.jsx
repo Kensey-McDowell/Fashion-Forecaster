@@ -15,7 +15,6 @@ export default function Navbar({ isLoggedIn }) {
           <div className="dropdown">
             <button className="dropbtn">Forecasting</button>
             <div className="dropdown-content">
-              <Link to="/trend">Trend Forecasting</Link>
               <Link to="/color">Color Forecasting</Link>
               <Link to="/market">Market Research</Link>
             </div>
@@ -26,7 +25,6 @@ export default function Navbar({ isLoggedIn }) {
             <button className="dropbtn">Reviews</button>
             <div className="dropdown-content">
               <Link to="/fashionWeek">Fashion Week</Link>
-              <Link to="/street">Street Style</Link>
             </div>
           </div>
           

@@ -46,7 +46,7 @@ function App() {
                 <Navbar isLoggedIn={isLoggedIn} />
                 
                 <Routes>
-                    <Route path="/" element={<TestPage />} />
+                    <Route path="/" element={<IntroPage />} />
                     <Route path="/intro" element={<IntroPage />} />
                     <Route path="/about" element={<AboutPage />} /> 
                     <Route path="/trend" element={<TrendPage />} />  
@@ -68,7 +68,7 @@ function App() {
                         element={isLoggedIn ? <UserProfile onLogout={handleLogout} /> : <Navigate to="/signin" />} 
                     />
                     
-                    <Route path="*" element={<TestPage />} />
+                    <Route path="*" element={<IntroPage />} />
                 </Routes>
                 <Footer />
             </div>

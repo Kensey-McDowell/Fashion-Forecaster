@@ -49,11 +49,11 @@ export default function AuthPage({ onLoginSuccess }) {
       <div className="shutter-panel">
         <div className="shutter-content">
           <div className={`msg-box ${isSignUp ? 'hide' : 'show'}`}>
-            <h2>NEW TO FORECASTING?</h2>
+            <h2 style={{color: 'white'}}>NEW TO FORECASTING?</h2>
             <button className="ghost-btn" onClick={handleToggle}>JOIN NOW</button>
           </div>
           <div className={`msg-box ${isSignUp ? 'show' : 'hide'}`}>
-            <h2>RETURNING ANALYST?</h2>
+            <h2 style={{color: 'white'}}>RETURNING ANALYST?</h2>
             <button className="ghost-btn" onClick={handleToggle}>SIGN IN</button>
           </div>
         </div>
