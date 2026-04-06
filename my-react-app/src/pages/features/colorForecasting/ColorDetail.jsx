@@ -32,6 +32,9 @@ export default function ColorDetail({ colorId, onBack }) {
   const [selectedBoardId, setSelectedBoardId] = useState("");
   const [storyError, setStoryError] = useState("");
   const [isSavingStory, setIsSavingStory] = useState(false);
+  const [boardMessage, setBoardMessage] = useState("");
+  const [boardError, setBoardError] = useState("");
+  const [isAddingToBoard, setIsAddingToBoard] = useState(false);
 
   useEffect(() => {
     async function loadTrendBoards() {
@@ -128,20 +131,36 @@ export default function ColorDetail({ colorId, onBack }) {
   }
 
   async function handleAddToTrendBoard() {
+    setBoardMessage("");
+    setBoardError("");
+
     if (!selectedBoardId || !color) {
+      setBoardError("Select a trend board first.");
       return;
     }
 
-    const entry = await addColorToBoard(selectedBoardId, color.id);
+    setIsAddingToBoard(true);
 
-    if (!entry) {
-      return;
+    try {
+      const entry = await addColorToBoard(selectedBoardId, color.id);
+
+      if (!entry) {
+        setBoardError("This color could not be added. It may already be on the board.");
+        return;
+      }
+
+      const selectedBoard = trendBoards.find((board) => board.id === selectedBoardId);
+      setBoardMessage(
+        selectedBoard
+          ? `${color.name} added to ${selectedBoard.name}.`
+          : `${color.name} added to the selected board.`
+      );
+    } catch (error) {
+      console.error("Unable to add color to trend board:", error);
+      setBoardError("Unable to add this color right now.");
+    } finally {
+      setIsAddingToBoard(false);
     }
-
-    console.log("Added color to trend board", {
-      boardId: selectedBoardId,
-      colorId: color.id
-    });
   }
 
   function handleBackToColors() {
@@ -254,19 +273,23 @@ export default function ColorDetail({ colorId, onBack }) {
               <button
                 type="button"
                 onClick={handleAddToTrendBoard}
+                disabled={isAddingToBoard || trendBoards.length === 0}
                 style={{
                   padding: "12px 18px",
                   border: "1px solid #000",
-                  background: "#000",
+                  background: isAddingToBoard || trendBoards.length === 0 ? "#d9d2c9" : "#000",
                   color: "#fff",
-                  cursor: "pointer"
+                  cursor: isAddingToBoard || trendBoards.length === 0 ? "default" : "pointer"
                 }}
               >
-                Add to Trend Board
+                {isAddingToBoard ? "Adding..." : "Add to Trend Board"}
               </button>
               <Link
-                to="/trend-boards"
-                state={{ fromColorId: color.id }}
+                to={selectedBoardId ? `/boards/${selectedBoardId}` : "/trend-boards"}
+                state={{
+                  fromColorId: color.id,
+                  focusColorId: color.id
+                }}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -279,6 +302,21 @@ export default function ColorDetail({ colorId, onBack }) {
                 View Boards
               </Link>
             </div>
+            {trendBoards.length === 0 && (
+              <p style={{ margin: "14px 0 0", color: "#777" }}>
+                Create a trend board first to start building a palette.
+              </p>
+            )}
+            {boardMessage && (
+              <p style={{ margin: "14px 0 0", color: "#2f5d50", fontWeight: 500 }}>
+                {boardMessage}
+              </p>
+            )}
+            {boardError && (
+              <p style={{ margin: "14px 0 0", color: "#8a3b2e", fontWeight: 500 }}>
+                {boardError}
+              </p>
+            )}
           </div>
         </div>
       </section>

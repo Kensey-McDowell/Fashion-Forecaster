@@ -106,6 +106,21 @@ export async function addColorToBoard(boardId, colorId) {
   return data;
 }
 
+export async function removeColorFromBoard(boardId, colorId) {
+  const { error } = await supabase
+    .from("trend_board_colors")
+    .delete()
+    .eq("board_id", boardId)
+    .eq("color_id", colorId);
+
+  if (error) {
+    console.error("Remove color from board error:", error);
+    return false;
+  }
+
+  return true;
+}
+
 export async function getBoardColors(boardId) {
   const { data, error } = await supabase
     .from("trend_board_colors")

@@ -13,9 +13,9 @@ import FashionPage from "./pages/fashionWeek.jsx";
 import TestPage from "./pages/test.jsx";
 import ForecastDemo from "./pages/features/colorForecasting/ForecastDemo.jsx";
 import TrendBoards from "./pages/features/colorForecasting/TrendBoards.jsx";
-import TrendBoardDetail from "./pages/features/colorForecasting/TrendBoardDetail.jsx"; 
+import TrendBoardDetail from "./pages/features/colorForecasting/TrendBoardDetail.jsx";
 import SignPage from "./pages/signIn.jsx";
-import UserProfile from "./pages/userProfile.jsx"; 
+import UserProfile from "./pages/userProfile.jsx";
 
 // Components
 import Navbar from "./components/Navbar";
@@ -50,7 +50,10 @@ function App() {
                     <Route path="/intro" element={<IntroPage />} />
                     <Route path="/about" element={<AboutPage />} /> 
                     <Route path="/trend" element={<TrendPage />} />  
-                    <Route path="/color" element={<ColorPage />} /> 
+                    <Route path="/color" element={<ColorPage />} />
+                    <Route path="/forecast-demo" element={<ForecastDemo />} />
+                    <Route path="/trend-boards" element={<TrendBoards />} />
+                    <Route path="/boards/:boardId" element={<TrendBoardDetail />} />
                     <Route path="/collage" element={<CollagePage />} />
                     <Route path="/market" element={<MarketPage />} />
                     <Route path="/fashionWeek" element={<FashionPage />} /> 
