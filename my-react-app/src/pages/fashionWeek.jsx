@@ -1100,7 +1100,53 @@ function getDesignerLink(name, season, mainCat, subCat, directLink) {
 
 
 
-//Under Navbar content
+//Under Navbar content banner
+function YouTubeBanner() {
+  return (
+    <div className="yt_banner">
+      <div className="yt_track">
+        <span className="yt_content">
+          Watch full runway collections on YouTube •
+          <a
+            href="https://www.youtube.com/@FFChannel_Official"
+            target="_blank"
+            rel="noreferrer"
+            className="yt_button"
+          >
+            Visit Channel →
+          </a>
+        </span>
+
+        {/* duplicate for smooth loop */}
+        <span className="yt_content">
+          Watch full runway collections on YouTube •
+          <a
+            href="https://www.youtube.com/@FFChannel_Official"
+            target="_blank"
+            rel="noreferrer"
+            className="yt_button"
+          >
+            Visit Channel →
+          </a>
+        </span>
+
+        <span className="yt_content">
+          Watch full runway collections on YouTube •
+          <a
+            href="https://www.youtube.com/@FFChannel_Official"
+            target="_blank"
+            rel="noreferrer"
+            className="yt_button"
+          >
+            Visit Channel →
+          </a>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+
 function Welcome({ season, setSeason, city, setCity, mainCat, setMainCat, subCat, setSubCat }) {
   const seasonLabel = SEASONS.find(s => s.id === season)?.label;
   const mainLabel   = MAIN_CATEGORIES.find(c => c.id === mainCat)?.label;
@@ -1108,6 +1154,7 @@ function Welcome({ season, setSeason, city, setCity, mainCat, setMainCat, subCat
 
   return (
     <header className="welcome_header">
+      
       <h1 className="welcome_title">FASHION WEEK</h1>
 
       <div className="welcome_filters">
@@ -1210,6 +1257,7 @@ export default function FashionPage() {
 
   return (
     <div>
+      <YouTubeBanner />
       <Welcome
         season={season}   setSeason={setSeason}
         city={city}       setCity={setCity}

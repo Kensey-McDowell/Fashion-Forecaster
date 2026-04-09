@@ -19,6 +19,46 @@
     margin-bottom: 20px;
   }
 
+  /*Youtube function */
+  .yt_banner {
+    overflow: hidden;
+    border-top: 1px solid black;
+    border-bottom: 2px solid black;
+    white-space: nowrap;
+    background-color: lightgrey;
+  }
+  
+  .yt_track {
+    display: flex;
+    width: max-content;
+    animation: scroll 15s linear infinite;
+  }
+  
+  .yt_content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 60px;
+    font-size: 20px;
+
+  }
+  
+  .yt_button {
+    text-decoration: none;
+    color: black;
+    font-weight: bold;
+  }
+  
+  /* animation */
+  @keyframes scroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
   /* FILTER DROPDOWNS */
   .welcome_filters{
     display: flex;
