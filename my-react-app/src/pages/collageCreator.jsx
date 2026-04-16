@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Stage, Layer, Rect } from 'react-konva';
 import CollageBox from '../components/collageBox.jsx';
+import { fetchColors } from './features/colorForecasting/data/colorService';
 import './collageCreator.css';
 
 const GRID_SIZE = 20;
@@ -11,10 +12,25 @@ export default function CollagePage() {
   const [rects, setRects] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [bgColor, setBgColor] = useState('#ffffff');
+  const [savedColors, setSavedColors] = useState([]);
   const [stageSize, setStageSize] = useState({ width: BASE_WIDTH, height: BASE_HEIGHT, scale: 1 });
-  
+
   const stageRef = useRef();
   const containerRef = useRef();
+
+  useEffect(() => {
+    async function loadSavedColors() {
+      try {
+        const data = await fetchColors();
+        setSavedColors(data || []);
+      } catch (error) {
+        console.error('Unable to load saved colors:', error);
+        setSavedColors([]);
+      }
+    }
+
+    loadSavedColors();
+  }, []);
 
   // Handle Responsive Scaling
   useEffect(() => {
@@ -43,7 +59,7 @@ export default function CollagePage() {
     const handleKeyDown = (e) => {
       // Check if the user is currently typing in an input or text area
       const isTyping = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT';
-      
+
       if (!isTyping && (e.key === 'Backspace' || e.key === 'Delete') && selectedId) {
         setRects(prev => prev.filter(r => r.id !== selectedId));
         setSelectedId(null);
@@ -53,17 +69,25 @@ export default function CollagePage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedId]);
 
-  const addBox = () => {
+
+  // Here you can adjust the sizes of the defaulted blocks
+  const addSquare = () => {
     const id = `rect${Date.now()}`;
     setRects([...rects, { id, x: 40, y: 40, width: 140, height: 140, fill: '#000000', type: 'rect' }]);
     setSelectedId(id);
   };
 
+  const addBox = () => {
+    const id = `rect${Date.now()}`;
+    setRects([...rects, { id, x: 40, y: 40, width: 250, height: 60, fill: '#000000', type: 'rect' }]);
+    setSelectedId(id);
+  };
+
   const addText = () => {
     const id = `text${Date.now()}`;
-    setRects([...rects, { 
-      id, x: 100, y: 100, text: 'NEW TEXT', fontSize: 40, 
-      fontFamily: 'Arial', fill: '#000000', type: 'text' 
+    setRects([...rects, {
+      id, x: 100, y: 100, text: 'NEW TEXT', fontSize: 40,
+      fontFamily: 'Arial', fill: '#000000', type: 'text'
     }]);
     setSelectedId(id);
   };
@@ -89,7 +113,7 @@ export default function CollagePage() {
       };
       reader.readAsDataURL(file);
     });
-    e.target.value = null; 
+    e.target.value = null;
   };
 
   const moveLayer = (direction) => {
@@ -115,16 +139,32 @@ export default function CollagePage() {
     });
   };
 
+  const applySavedColor = (hex) => {
+    if (!selectedId) {
+      setBgColor(hex);
+      return;
+    }
+
+    setRects((prev) =>
+      prev.map((item) => (
+        item.id === selectedId && !item.imageSrc
+          ? { ...item, fill: hex }
+          : item
+      ))
+    );
+  };
+
   const selectedItem = rects.find(r => r.id === selectedId);
 
   return (
     <div className="collage-app">
       <aside className="sidebar">
         <h2 className="sidebar-title">Editor</h2>
-        
+
         <div className="tool-section">
           <label>Elements</label>
           <button className="secondary-btn" onClick={addBox}>+ Add Block</button>
+          <button className="secondary-btn" onClick={addSquare}>+ Add Square</button>
           <button className="secondary-btn" onClick={addText}>+ Add Text</button>
         </div>
 
@@ -137,9 +177,47 @@ export default function CollagePage() {
         <div className="tool-section">
           <label>Background</label>
           <div className="color-picker-wrapper">
-             <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} />
-             <span>{bgColor.toUpperCase()}</span>
+            <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} />
+            <span>{bgColor.toUpperCase()}</span>
           </div>
+        </div>
+
+        <div className="tool-section">
+          <label>Color Library</label>
+          {savedColors.length ? (
+            <div className="saved-colors-list">
+              {savedColors.map((color) => (
+                <button
+                  key={color.id}
+                  type="button"
+                  className="saved-color-card"
+                  onClick={() => applySavedColor(color.hex)}
+                  title={
+                    selectedId
+                      ? `Apply ${color.name} to selected item`
+                      : `Apply ${color.name} to background`
+                  }
+                >
+                  <span
+                    className="saved-color-swatch"
+                    style={{ backgroundColor: color.hex }}
+                    aria-hidden="true"
+                  />
+                  <span className="saved-color-meta">
+                    <span className="saved-color-name">{color.name}</span>
+                    <span className="saved-color-hex">{color.hex}</span>
+                    <span className="saved-color-season">
+                      {color.season || 'Uncategorized'}
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="saved-colors-empty">
+              Add colors in Color Forecasting to use them here.
+            </p>
+          )}
         </div>
 
         {selectedId && (
@@ -153,18 +231,18 @@ export default function CollagePage() {
             {selectedItem?.type === 'text' && (
               <div className="text-edit-group">
                 <label>Content</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="text-input"
                   value={selectedItem.text}
-                  onChange={(e) => setRects(rects.map(r => r.id === selectedId ? {...r, text: e.target.value} : r))}
+                  onChange={(e) => setRects(rects.map(r => r.id === selectedId ? { ...r, text: e.target.value } : r))}
                 />
                 <div>
                   <label>Font</label>
-                  <select 
+                  <select
                     className="font-select"
                     value={selectedItem.fontFamily}
-                    onChange={(e) => setRects(rects.map(r => r.id === selectedId ? {...r, fontFamily: e.target.value} : r))}
+                    onChange={(e) => setRects(rects.map(r => r.id === selectedId ? { ...r, fontFamily: e.target.value } : r))}
                   >
                     <option value="Arial">Arial</option>
                     <option value="Courier New">Courier</option>
@@ -176,14 +254,14 @@ export default function CollagePage() {
             )}
 
             {!selectedItem?.imageSrc && (
-               <div className="color-picker-wrapper">
-                 <input 
-                   type="color" 
-                   value={selectedItem?.fill || '#000000'}
-                   onChange={(e) => setRects(rects.map(r => r.id === selectedId ? {...r, fill: e.target.value} : r))} 
-                 />
-                 <span>Edit Color</span>
-               </div>
+              <div className="color-picker-wrapper">
+                <input
+                  type="color"
+                  value={selectedItem?.fill || '#000000'}
+                  onChange={(e) => setRects(rects.map(r => r.id === selectedId ? { ...r, fill: e.target.value } : r))}
+                />
+                <span>Edit Color</span>
+              </div>
             )}
             <button className="delete-btn" onClick={() => { setRects(rects.filter(r => r.id !== selectedId)); setSelectedId(null); }}>Delete</button>
           </div>
@@ -194,8 +272,8 @@ export default function CollagePage() {
 
       <main className="canvas-area" ref={containerRef}>
         <div className="canvas-wrapper">
-          <Stage 
-            width={stageSize.width} height={stageSize.height} 
+          <Stage
+            width={stageSize.width} height={stageSize.height}
             scaleX={stageSize.scale} scaleY={stageSize.scale}
             ref={stageRef} className="canvas-stage"
             onMouseDown={(e) => e.target === e.target.getStage() && setSelectedId(null)}

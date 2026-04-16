@@ -10,10 +10,19 @@ import {
 } from "./data/colorService";
 import "./colorForecasting.css";
 
+const SEASON_OPTIONS = [
+  "Fall",
+  "Winter",
+  "Spring",
+  "Summer",
+  "Fall/Winter",
+  "Spring/Summer"
+];
+
 export default function ColorForecasting() {
   const location = useLocation();
   const [colors, setColors] = useState([]);
-  const [selectedColorId, setSelectedColorId] = useState(null); 
+  const [selectedColorId, setSelectedColorId] = useState(null);
 
   const [newName, setNewName] = useState("");
   const [newSeason, setNewSeason] = useState("");
@@ -134,8 +143,7 @@ export default function ColorForecasting() {
     <main className="color-page">
       <section className="hero">
         <div className="hero-text">
-          <p className="small-label">Color Forecasting</p>
-          <h1>Seasonal Color Forecasting</h1>
+          <h1>Color Forecasting</h1>
           <p className="hero-copy">
             Build and explore seasonal colors used across forecasting palettes.
           </p>
@@ -145,7 +153,6 @@ export default function ColorForecasting() {
       <section className="card-section">
         <div className="section-divider" aria-hidden="true" />
         <div className="section-header">
-          <p className="small-label">Color Library</p>
           <h2>COLOR LIBRARY</h2>
           <p className="hero-copy">
             Explore seasonal colors used in forecasting palettes.
@@ -163,12 +170,17 @@ export default function ColorForecasting() {
           </div>
 
           <div className="form-field name-field">
-            <input
-              type="text"
-              placeholder="Season"
+            <select
               value={newSeason}
               onChange={(e) => setNewSeason(e.target.value)}
-            />
+            >
+              <option value="">Season</option>
+              {SEASON_OPTIONS.map((seasonOption) => (
+                <option key={seasonOption} value={seasonOption}>
+                  {seasonOption}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="form-field color-picker-field">

@@ -36,6 +36,19 @@
   width: 100%;
   margin: 0 auto;
   text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.hero-kicker {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: #6e675f;
 }
 
 .small-label {
@@ -58,8 +71,11 @@
 }
 
 .hero h1 {
-  max-width: 760px;
-  font-size: clamp(3rem, 7vw, 5.75rem);
+  max-width: none;
+  font-size: clamp(4rem, 7vw, 6.1rem);
+  letter-spacing: -0.045em;
+  line-height: 0.92;
+  white-space: nowrap;
 }
 
 .hero-copy,
@@ -72,8 +88,11 @@
 }
 
 .hero-copy {
-  max-width: 500px;
-  margin: 30px 0 0;
+  max-width: 42rem;
+  margin: 0;
+  font-size: clamp(1.1rem, 1.55vw, 1.45rem);
+  line-height: 1.6;
+  color: rgba(61, 58, 54, 0.9);
 }
 
 .two-column-section {
@@ -265,6 +284,19 @@
   color: #111111;
 }
 
+.color-form select {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 13px 14px;
+  border: 1px solid rgba(216, 210, 202, 0.7);
+  font-size: 15px;
+  background: #ffffff;
+  color: #111111;
+  appearance: none;
+  border-radius: 0;
+}
+
 .color-form input[type="color"] {
   width: 48px;
   min-width: 48px;
@@ -374,6 +406,21 @@
   .hero {
     min-height: auto;
     padding: 108px 18px 84px;
+  }
+
+  .hero-text {
+    gap: 16px;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.75rem, 9vw, 4.5rem);
+    white-space: normal;
+  }
+
+  .hero-copy {
+    max-width: 32rem;
+    font-size: 1.05rem;
+    line-height: 1.7;
   }
 
   .color-form {
