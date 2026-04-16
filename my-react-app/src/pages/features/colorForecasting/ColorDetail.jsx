@@ -7,7 +7,8 @@ import {
 } from "./data/colorService";
 import {
   createColorStory,
-  fetchColorStoriesByColor
+  fetchColorStoriesByColor,
+  updateColorStory
 } from "./data/colorStoryService";
 import {
   addColorToBoard,
@@ -32,6 +33,13 @@ export default function ColorDetail({ colorId, onBack }) {
   const [selectedBoardId, setSelectedBoardId] = useState("");
   const [storyError, setStoryError] = useState("");
   const [isSavingStory, setIsSavingStory] = useState(false);
+  const [editingStoryId, setEditingStoryId] = useState(null);
+  const [editingNarrative, setEditingNarrative] = useState("");
+  const [editingDesignApplication, setEditingDesignApplication] = useState("");
+  const [editingFabricSuggestions, setEditingFabricSuggestions] = useState("");
+  const [editingStoryError, setEditingStoryError] = useState("");
+  const [isUpdatingStory, setIsUpdatingStory] = useState(false);
+  const [openStoryMenuId, setOpenStoryMenuId] = useState(null);
   const [boardMessage, setBoardMessage] = useState("");
   const [boardError, setBoardError] = useState("");
   const [isAddingToBoard, setIsAddingToBoard] = useState(false);
@@ -160,6 +168,51 @@ export default function ColorDetail({ colorId, onBack }) {
       setBoardError("Unable to add this color right now.");
     } finally {
       setIsAddingToBoard(false);
+    }
+  }
+
+  function handleStartStoryEdit(story) {
+    setOpenStoryMenuId(null);
+    setEditingStoryId(story.id);
+    setEditingNarrative(story.narrative || "");
+    setEditingDesignApplication(story.design_application || "");
+    setEditingFabricSuggestions(story.fabric_suggestions || "");
+    setEditingStoryError("");
+  }
+
+  function handleCancelStoryEdit() {
+    setEditingStoryId(null);
+    setEditingNarrative("");
+    setEditingDesignApplication("");
+    setEditingFabricSuggestions("");
+    setEditingStoryError("");
+    setIsUpdatingStory(false);
+  }
+
+  async function handleSaveStoryEdit(storyId) {
+    setEditingStoryError("");
+    setIsUpdatingStory(true);
+
+    try {
+      const updatedStory = await updateColorStory(storyId, {
+        narrative: editingNarrative,
+        design_application: editingDesignApplication,
+        fabric_suggestions: editingFabricSuggestions
+      });
+
+      if (!updatedStory) {
+        setEditingStoryError("Unable to update story.");
+        return;
+      }
+
+      const colorStories = await fetchColorStoriesByColor(color.id);
+      setStories(colorStories || []);
+      handleCancelStoryEdit();
+    } catch (error) {
+      console.error("Unable to update color story:", error);
+      setEditingStoryError("Unable to update story.");
+    } finally {
+      setIsUpdatingStory(false);
     }
   }
 
@@ -475,28 +528,147 @@ export default function ColorDetail({ colorId, onBack }) {
             <div
               key={story.id}
               style={{
+                position: "relative",
                 padding: "40px",
                 border: "1px solid #e5dfd7",
                 background: "#ffffff"
               }}
             >
-              <p style={{ margin: "0 0 24px", lineHeight: 1.8 }}>
-                {story.narrative}
-              </p>
-
-              <div style={{ marginBottom: "18px" }}>
-                <strong>Design Application</strong>
-                <p style={{ margin: "8px 0 0", lineHeight: 1.6 }}>
-                  {story.design_application}
-                </p>
+              <div style={{ position: "absolute", top: "18px", right: "18px" }}>
+                <button
+                  type="button"
+                  onClick={() => setOpenStoryMenuId((currentId) => (
+                    currentId === story.id ? null : story.id
+                  ))}
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    border: "none",
+                    borderRadius: "999px",
+                    background: "#f6f4ef",
+                    cursor: "pointer",
+                    fontSize: "20px",
+                    lineHeight: 1
+                  }}
+                >
+                  ⋯
+                </button>
+                {openStoryMenuId === story.id && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "40px",
+                      right: 0,
+                      minWidth: "160px",
+                      border: "1px solid #ddd5ca",
+                      background: "#fff",
+                      boxShadow: "0 12px 24px rgba(17, 17, 17, 0.08)"
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleStartStoryEdit(story)}
+                      style={{
+                        width: "100%",
+                        padding: "12px 14px",
+                        border: "none",
+                        background: "transparent",
+                        textAlign: "left",
+                        cursor: "pointer"
+                      }}
+                    >
+                      Edit Story
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <div>
-                <strong>Fabric Suggestions</strong>
-                <p style={{ margin: "8px 0 0", lineHeight: 1.6 }}>
-                  {story.fabric_suggestions}
-                </p>
-              </div>
+              {editingStoryId === story.id ? (
+                <div style={{ display: "grid", gap: "18px" }}>
+                  <textarea
+                    value={editingNarrative}
+                    onChange={(event) => setEditingNarrative(event.target.value)}
+                    rows={6}
+                    style={{ padding: "14px", marginTop: "8px" }}
+                  />
+
+                  <div>
+                    <strong>Design Application</strong>
+                    <textarea
+                      value={editingDesignApplication}
+                      onChange={(event) => setEditingDesignApplication(event.target.value)}
+                      rows={4}
+                      style={{ width: "100%", padding: "14px", marginTop: "8px" }}
+                    />
+                  </div>
+
+                  <div>
+                    <strong>Fabric Suggestions</strong>
+                    <textarea
+                      value={editingFabricSuggestions}
+                      onChange={(event) => setEditingFabricSuggestions(event.target.value)}
+                      rows={4}
+                      style={{ width: "100%", padding: "14px", marginTop: "8px" }}
+                    />
+                  </div>
+
+                  {editingStoryError && (
+                    <p style={{ margin: 0, color: "#b42318" }}>
+                      {editingStoryError}
+                    </p>
+                  )}
+
+                  <div style={{ display: "flex", gap: "12px" }}>
+                    <button
+                      type="button"
+                      onClick={() => handleSaveStoryEdit(story.id)}
+                      disabled={isUpdatingStory}
+                      style={{
+                        padding: "12px 18px",
+                        border: "1px solid #000",
+                        background: isUpdatingStory ? "#444" : "#000",
+                        color: "#fff",
+                        cursor: isUpdatingStory ? "default" : "pointer"
+                      }}
+                    >
+                      {isUpdatingStory ? "Saving..." : "Save Story"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelStoryEdit}
+                      disabled={isUpdatingStory}
+                      style={{
+                        padding: "12px 18px",
+                        border: "1px solid #ccc",
+                        background: "#fff",
+                        cursor: isUpdatingStory ? "default" : "pointer"
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p style={{ margin: "0 0 24px", lineHeight: 1.8 }}>
+                    {story.narrative}
+                  </p>
+
+                  <div style={{ marginBottom: "18px" }}>
+                    <strong>Design Application</strong>
+                    <p style={{ margin: "8px 0 0", lineHeight: 1.6 }}>
+                      {story.design_application}
+                    </p>
+                  </div>
+
+                  <div>
+                    <strong>Fabric Suggestions</strong>
+                    <p style={{ margin: "8px 0 0", lineHeight: 1.6 }}>
+                      {story.fabric_suggestions}
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>

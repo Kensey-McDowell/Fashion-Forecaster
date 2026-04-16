@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Stage, Layer, Rect } from 'react-konva';
 import CollageBox from '../components/collageBox.jsx';
 import { fetchColors } from './features/colorForecasting/data/colorService';
+import { fetchColorStoriesByColor } from './features/colorForecasting/data/colorStoryService';
 import './collageCreator.css';
 
 const GRID_SIZE = 20;
@@ -13,6 +14,9 @@ export default function CollagePage() {
   const [selectedId, setSelectedId] = useState(null);
   const [bgColor, setBgColor] = useState('#ffffff');
   const [savedColors, setSavedColors] = useState([]);
+  const [activeLibraryColorId, setActiveLibraryColorId] = useState(null);
+  const [activeLibraryStory, setActiveLibraryStory] = useState(null);
+  const [isLoadingStory, setIsLoadingStory] = useState(false);
   const [stageSize, setStageSize] = useState({ width: BASE_WIDTH, height: BASE_HEIGHT, scale: 1 });
 
   const stageRef = useRef();
@@ -31,6 +35,29 @@ export default function CollagePage() {
 
     loadSavedColors();
   }, []);
+
+  useEffect(() => {
+    async function loadActiveStory() {
+      if (!activeLibraryColorId) {
+        setActiveLibraryStory(null);
+        return;
+      }
+
+      setIsLoadingStory(true);
+
+      try {
+        const stories = await fetchColorStoriesByColor(activeLibraryColorId);
+        setActiveLibraryStory((stories || [])[0] || null);
+      } catch (error) {
+        console.error('Unable to load color story:', error);
+        setActiveLibraryStory(null);
+      } finally {
+        setIsLoadingStory(false);
+      }
+    }
+
+    loadActiveStory();
+  }, [activeLibraryColorId]);
 
   // Handle Responsive Scaling
   useEffect(() => {
@@ -92,6 +119,56 @@ export default function CollagePage() {
     setSelectedId(id);
   };
 
+  const addStoryTextToCanvas = (text) => {
+    if (!text || !text.trim()) {
+      return;
+    }
+
+    if (selectedItem?.type === 'text') {
+      setRects((prev) => prev.map((item) => (
+        item.id === selectedId
+          ? { ...item, text }
+          : item
+      )));
+      return;
+    }
+
+    const id = `text${Date.now()}`;
+    setRects((prev) => [...prev, {
+      id,
+      x: 80,
+      y: 80,
+      text,
+      fontSize: 28,
+      width: 320,
+      fontFamily: 'Arial',
+      fill: '#111111',
+      type: 'text'
+    }]);
+    setSelectedId(id);
+  };
+
+  const addColorSwatchToCanvas = (color) => {
+    if (!color) {
+      return;
+    }
+
+    const id = `swatch${Date.now()}`;
+    setRects((prev) => [...prev, {
+      id,
+      x: 80,
+      y: 80,
+      width: 180,
+      height: 260,
+      fill: color.hex,
+      hex: color.hex,
+      name: color.name,
+      season: color.season || '',
+      type: 'swatchCard'
+    }]);
+    setSelectedId(id);
+  };
+
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     files.forEach((file) => {
@@ -139,7 +216,9 @@ export default function CollagePage() {
     });
   };
 
-  const applySavedColor = (hex) => {
+  const applySavedColor = (color) => {
+    const { hex } = color;
+
     if (!selectedId) {
       setBgColor(hex);
       return;
@@ -148,13 +227,16 @@ export default function CollagePage() {
     setRects((prev) =>
       prev.map((item) => (
         item.id === selectedId && !item.imageSrc
-          ? { ...item, fill: hex }
+          ? item.type === 'swatchCard'
+            ? { ...item, fill: hex, hex: color.hex, name: color.name, season: color.season || '' }
+            : { ...item, fill: hex }
           : item
       ))
     );
   };
 
   const selectedItem = rects.find(r => r.id === selectedId);
+  const activeLibraryColor = savedColors.find((color) => color.id === activeLibraryColorId);
 
   return (
     <div className="collage-app">
@@ -190,8 +272,11 @@ export default function CollagePage() {
                 <button
                   key={color.id}
                   type="button"
-                  className="saved-color-card"
-                  onClick={() => applySavedColor(color.hex)}
+                  className={`saved-color-card${activeLibraryColorId === color.id ? ' is-active' : ''}`}
+                  onClick={() => {
+                    setActiveLibraryColorId(color.id);
+                    applySavedColor(color);
+                  }}
                   title={
                     selectedId
                       ? `Apply ${color.name} to selected item`
@@ -217,6 +302,70 @@ export default function CollagePage() {
             <p className="saved-colors-empty">
               Add colors in Color Forecasting to use them here.
             </p>
+          )}
+
+          {activeLibraryColor && (
+            <div className="story-panel">
+              <p className="story-panel-label">
+                {activeLibraryColor.name} Story
+              </p>
+
+              {isLoadingStory ? (
+                <p className="story-panel-empty">Loading story...</p>
+              ) : activeLibraryStory ? (
+                <>
+                  <div className="story-panel-copy">
+                    <strong>Narrative</strong>
+                    <p>{activeLibraryStory.narrative}</p>
+                  </div>
+
+                  <div className="story-panel-copy">
+                    <strong>Design Application</strong>
+                    <p>{activeLibraryStory.design_application}</p>
+                  </div>
+
+                  <div className="story-panel-copy">
+                    <strong>Fabric Suggestions</strong>
+                    <p>{activeLibraryStory.fabric_suggestions}</p>
+                  </div>
+
+                  <div className="story-panel-actions">
+                    <button
+                      type="button"
+                      className="story-action-btn"
+                      onClick={() => addColorSwatchToCanvas(activeLibraryColor)}
+                    >
+                      Add Color Swatch
+                    </button>
+                    <button
+                      type="button"
+                      className="story-action-btn"
+                      onClick={() => addStoryTextToCanvas(activeLibraryStory.narrative)}
+                    >
+                      Add Narrative
+                    </button>
+                    <button
+                      type="button"
+                      className="story-action-btn"
+                      onClick={() => addStoryTextToCanvas(activeLibraryStory.design_application)}
+                    >
+                      Add Design Notes
+                    </button>
+                    <button
+                      type="button"
+                      className="story-action-btn"
+                      onClick={() => addStoryTextToCanvas(activeLibraryStory.fabric_suggestions)}
+                    >
+                      Add Fabric Notes
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p className="story-panel-empty">
+                  No story yet for this color.
+                </p>
+              )}
+            </div>
           )}
         </div>
 
@@ -279,7 +428,13 @@ export default function CollagePage() {
             onMouseDown={(e) => e.target === e.target.getStage() && setSelectedId(null)}
           >
             <Layer>
-              <Rect width={BASE_WIDTH} height={BASE_HEIGHT} fill={bgColor} />
+              <Rect
+                width={BASE_WIDTH}
+                height={BASE_HEIGHT}
+                fill={bgColor}
+                onMouseDown={() => setSelectedId(null)}
+                onTap={() => setSelectedId(null)}
+              />
               {rects.map((rect, i) => (
                 <CollageBox
                   key={rect.id} shapeProps={rect}

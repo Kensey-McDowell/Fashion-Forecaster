@@ -127,6 +127,11 @@ body {
   border-color: var(--pantone-black);
 }
 
+.saved-color-card.is-active {
+  border-color: var(--pantone-black);
+  background: #f6f4ef;
+}
+
 .saved-color-swatch {
   width: 36px;
   height: 36px;
@@ -167,6 +172,67 @@ body {
 .saved-colors-empty {
   margin: 0;
   line-height: 1.5;
+}
+
+.story-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #faf8f5;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.story-panel-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--pantone-black);
+}
+
+.story-panel-copy strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #666666;
+}
+
+.story-panel-copy p,
+.story-panel-empty {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #222222;
+}
+
+.story-panel-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.story-action-btn {
+  border: 1px solid var(--pantone-black);
+  background: #ffffff;
+  color: var(--pantone-black);
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.story-action-btn:hover {
+  background: #f6f4ef;
 }
 
 .tool-section label {

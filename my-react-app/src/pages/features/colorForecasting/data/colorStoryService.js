@@ -41,3 +41,27 @@ export async function fetchColorStoriesByColor(colorId) {
 
   return data || [];
 }
+
+export async function updateColorStory(id, {
+  narrative,
+  design_application,
+  fabric_suggestions
+}) {
+  const { data, error } = await supabase
+    .from("color_stories")
+    .update({
+      narrative,
+      design_application,
+      fabric_suggestions
+    })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Update color story error:", error);
+    return null;
+  }
+
+  return data;
+}

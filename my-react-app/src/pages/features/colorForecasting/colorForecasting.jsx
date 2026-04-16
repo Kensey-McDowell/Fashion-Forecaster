@@ -259,6 +259,7 @@ export default function ColorForecasting() {
                     id={color.id}
                     name={color.name}
                     hex={color.hex}
+                    onEditStory={() => setSelectedColorId(color.id)}
                     onRename={() => handleRenameColor(color)}
                     onDuplicate={() => handleDuplicateColor(color)}
                     onViewDetails={() => setSelectedColorId(color.id)}

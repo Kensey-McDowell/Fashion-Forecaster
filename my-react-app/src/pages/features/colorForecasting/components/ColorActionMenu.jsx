@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 export default function ColorActionMenu({
   colorName,
+  onEditStory,
   onRename,
   onDuplicate,
   onViewDetails,
@@ -64,6 +65,14 @@ export default function ColorActionMenu({
 
       {isOpen && (
         <div className="color-action-menu" role="menu">
+          <button
+            type="button"
+            className="color-action-menu-item"
+            role="menuitem"
+            onClick={(event) => handleAction(event, onEditStory)}
+          >
+            Edit Color Story
+          </button>
           <button
             type="button"
             className="color-action-menu-item"
