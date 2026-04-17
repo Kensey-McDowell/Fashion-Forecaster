@@ -10,8 +10,8 @@ import csv from "csv-parser";
 
 console.log("Supabase URL:", process.env.VITE_SUPABASE_URL);
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL; // Added VITE_ prefix
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY; // Added VITE_ prefix
+const supabaseUrl = process.env.VITE_SUPABASE_URL; 
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY; 
 
 if (!supabaseUrl || !supabaseKey) {
   console.error("Error: Supabase environment variables are missing!");
@@ -41,7 +41,6 @@ function getTopItems(obj, limit = 5) {
     .map(([name, count]) => `${name} (${count} occurrences)`);
 }
 
-// 🔹 FIXED CSV PARSER: Now returns a Promise
 function processCSV(filePath, genderLabel) {
   return new Promise((resolve, reject) => {
     if (!fs.existsSync(filePath)) return resolve();
@@ -72,7 +71,6 @@ function processCSV(filePath, genderLabel) {
   });
 }
 
-// 🔹 FIXED DIRECTORY LOADER: Now async
 const loadFolderRecursive = async (folderPath, genderLabel) => {
   if (!fs.existsSync(folderPath)) return;
 
@@ -91,13 +89,12 @@ const loadFolderRecursive = async (folderPath, genderLabel) => {
   }
 };
 
-// 🔹 STARTUP LOGIC: Load data BEFORE starting the server
 async function startup() {
   console.log("📂 Initializing Fashion Dataset (Deep Search)...");
   
   const baseDataPath = path.resolve(__dirname, "data");
 
-  // We search the top-level 'Men' and 'Women' folders recursively
+  // Search the top-level 'Men' and 'Women' folders recursively
   await loadFolderRecursive(path.join(baseDataPath, "Men"), "men");
   await loadFolderRecursive(path.join(baseDataPath, "Women"), "women");
   
@@ -117,7 +114,7 @@ async function startup() {
   app.listen(3001, () => console.log(`Server on http://localhost:3001`));
 }
 
-// 🔹 AI CHAT ROUTE
+// AI CHAT ROUTE
 app.post("/chat", async (req, res) => {
   try {
     const { messages } = req.body;
