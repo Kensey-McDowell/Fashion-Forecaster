@@ -1,5 +1,9 @@
 import { supabase } from "./supabaseClient";
 
+function normalizeRequestedRole(value) {
+  return value === "professor" ? "professor" : "student";
+}
+
 function buildProfilePayload(user) {
   const fallbackName = user.email?.split("@")[0] || "Fashion Student";
 
@@ -7,7 +11,7 @@ function buildProfilePayload(user) {
     id: user.id,
     name: user.user_metadata?.full_name || user.user_metadata?.name || fallbackName,
     email: user.email,
-    role: "student"
+    role: normalizeRequestedRole(user.user_metadata?.requested_role)
   };
 }
 

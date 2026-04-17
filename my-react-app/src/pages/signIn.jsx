@@ -5,11 +5,16 @@ import './signIn.css';
 
 const AUTHENTICATED_HOME = '/intro';
 
+function sanitizeSignupRole(value) {
+  return value === 'professor' ? 'professor' : 'student';
+}
+
 export default function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isChanging, setIsChanging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fullName, setFullName] = useState('');
+  const [signUpRole, setSignUpRole] = useState('student');
   const [signInEmail, setSignInEmail] = useState('');
   const [signInPassword, setSignInPassword] = useState('');
   const [signUpEmail, setSignUpEmail] = useState('');
@@ -65,7 +70,8 @@ export default function AuthPage() {
       password: signUpPassword,
       options: {
         data: {
-          full_name: fullName
+          full_name: fullName,
+          requested_role: sanitizeSignupRole(signUpRole)
         }
       }
     });
@@ -163,6 +169,15 @@ export default function AuthPage() {
               minLength={6}
               required
             />
+            <select
+              className="vogue-input vogue-select"
+              value={signUpRole}
+              onChange={(e) => setSignUpRole(sanitizeSignupRole(e.target.value))}
+              required
+            >
+              <option value="student">STUDENT</option>
+              <option value="professor">PROFESSOR</option>
+            </select>
             <button type="submit" className="submit-btn" disabled={isSubmitting}>
               {isSubmitting ? 'CREATING...' : 'CREATE ACCOUNT'}
             </button>

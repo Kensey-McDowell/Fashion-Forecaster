@@ -66,6 +66,12 @@ h2 { font-weight: 700; letter-spacing: 2px; margin-bottom: 10px; }
   letter-spacing: 1px;
 }
 
+.vogue-select {
+  background: #fff;
+  color: #000;
+  text-transform: uppercase;
+}
+
 .submit-btn {
   background: #000;
   color: #fff;
