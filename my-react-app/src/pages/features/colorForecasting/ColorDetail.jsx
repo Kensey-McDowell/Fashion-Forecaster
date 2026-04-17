@@ -7,6 +7,7 @@ import {
 } from "./data/colorService";
 import {
   createColorStory,
+  deleteColorStory,
   fetchColorStoriesByColor,
   updateColorStory
 } from "./data/colorStoryService";
@@ -213,6 +214,39 @@ export default function ColorDetail({ colorId, onBack }) {
       setEditingStoryError("Unable to update story.");
     } finally {
       setIsUpdatingStory(false);
+    }
+  }
+
+  async function handleDeleteStory(storyId) {
+    if (!color) {
+      return;
+    }
+
+    const shouldDelete = window.confirm("Delete this color story?");
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    setOpenStoryMenuId(null);
+
+    if (editingStoryId === storyId) {
+      handleCancelStoryEdit();
+    }
+
+    try {
+      const didDelete = await deleteColorStory(storyId);
+
+      if (!didDelete) {
+        setEditingStoryError("Unable to delete story.");
+        return;
+      }
+
+      const colorStories = await fetchColorStoriesByColor(color.id);
+      setStories(colorStories || []);
+    } catch (error) {
+      console.error("Unable to delete color story:", error);
+      setEditingStoryError("Unable to delete story.");
     }
   }
 
@@ -578,6 +612,21 @@ export default function ColorDetail({ colorId, onBack }) {
                       }}
                     >
                       Edit Story
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteStory(story.id)}
+                      style={{
+                        width: "100%",
+                        padding: "12px 14px",
+                        border: "none",
+                        background: "transparent",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        color: "#b42318"
+                      }}
+                    >
+                      Delete Story
                     </button>
                   </div>
                 )}

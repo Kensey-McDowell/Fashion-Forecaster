@@ -172,6 +172,22 @@ body {
 .saved-colors-empty {
   margin: 0;
   line-height: 1.5;
+  color: var(--pantone-black);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.saved-colors-empty-link {
+  display: block;
+  padding: 16px 18px;
+  border: 1.5px solid var(--pantone-black);
+  background: #ffffff;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.saved-colors-empty-link:hover {
+  background: #f6f4ef;
 }
 
 .story-panel {

@@ -3,6 +3,11 @@ import { Link } from 'react-router-dom';
 import './userProfile.css';
 
 export default function UserProfile({ user, onLogout }) {
+  const displayName =
+    user?.user_metadata?.full_name ||
+    user?.email?.split('@')[0] ||
+    "Fashion Student";
+
   // Mock Pantone-style data for the student's color forecasting work
   const savedPalettes = [
     { id: 1, name: "DESERT DUST", code: "14-1312 TCX", hex: "#dabe9a" },
@@ -26,8 +31,9 @@ export default function UserProfile({ user, onLogout }) {
         {/* STUDENT HEADER */}
         <header className="profile-header">
           <p className="overline">STUDENT ARCHIVE</p>
-          <h1 className="user-name" style={{textAlign: 'left'}}>{user?.name || "Kensey McDowell"}</h1>
+          <h1 className="user-name" style={{textAlign: 'left'}}>{displayName}</h1>
           <p className="user-role">FASHION STUDENT — ID: 2026-X94</p>
+          {user?.email && <p className="user-role">{user.email}</p>}
         </header>
 
         {/* COLOR FORECASTING WORK */}

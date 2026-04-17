@@ -1,3 +1,4 @@
+import { getAuthenticatedUserId } from "../../../../lib/authUser";
 import { supabase } from "../../../../lib/supabaseClient";
 
 export async function getTrendBoards() {
@@ -38,7 +39,14 @@ export async function getTrendBoards() {
 }
 
 export async function createTrendBoard({ name, season, year }) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return null;
+  }
+
   const payload = {
+    user_id: userId,
     name: name.trim(),
     season: season.trim(),
     year
@@ -59,10 +67,17 @@ export async function createTrendBoard({ name, season, year }) {
 }
 
 export async function updateTrendBoardName(boardId, name) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return false;
+  }
+
   const { error } = await supabase
     .from("trend_boards")
     .update({ name: name.trim() })
-    .eq("id", boardId);
+    .eq("id", boardId)
+    .eq("user_id", userId);
 
   if (error) {
     console.error("Update trend board name error:", error);
@@ -73,10 +88,17 @@ export async function updateTrendBoardName(boardId, name) {
 }
 
 export async function deleteTrendBoard(boardId) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return false;
+  }
+
   const { error } = await supabase
     .from("trend_boards")
     .delete()
-    .eq("id", boardId);
+    .eq("id", boardId)
+    .eq("user_id", userId);
 
   if (error) {
     console.error("Delete trend board error:", error);
@@ -87,10 +109,17 @@ export async function deleteTrendBoard(boardId) {
 }
 
 export async function addColorToBoard(boardId, colorId) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return null;
+  }
+
   const { data, error } = await supabase
     .from("trend_board_colors")
     .insert([
       {
+        user_id: userId,
         board_id: boardId,
         color_id: colorId
       }
@@ -107,11 +136,18 @@ export async function addColorToBoard(boardId, colorId) {
 }
 
 export async function removeColorFromBoard(boardId, colorId) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return false;
+  }
+
   const { error } = await supabase
     .from("trend_board_colors")
     .delete()
     .eq("board_id", boardId)
-    .eq("color_id", colorId);
+    .eq("color_id", colorId)
+    .eq("user_id", userId);
 
   if (error) {
     console.error("Remove color from board error:", error);

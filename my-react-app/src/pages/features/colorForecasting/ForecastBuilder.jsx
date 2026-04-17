@@ -58,7 +58,6 @@ export default function ForecastBuilder() {
       setTargetMarket("");
       setInspiration("");
       setSelectedColorIds([]);
-      console.log("Forecast saved successfully", forecast);
     } catch (error) {
       console.error(error);
     }

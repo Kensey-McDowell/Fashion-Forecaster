@@ -1,45 +1,91 @@
 import React, { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabaseClient';
 import './signIn.css';
 
-// --- DEMO CREDENTIALS ---
-const DEMO_USER = {
-  email: "admin@dev.com",
-  password: "password123",
-  name: "Kensey McDowell",
-  role: "Developer Admin",
-  location: "Murfreesboro / Tennessee"
-};
+const AUTHENTICATED_HOME = '/intro';
 
-// We pass { onLoginSuccess } as a prop from App.jsx
-export default function AuthPage({ onLoginSuccess }) {
+export default function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isChanging, setIsChanging] = useState(false);
-  
-  // Form States
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [signInEmail, setSignInEmail] = useState('');
+  const [signInPassword, setSignInPassword] = useState('');
+  const [signUpEmail, setSignUpEmail] = useState('');
+  const [signUpPassword, setSignUpPassword] = useState('');
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  // Toggle Shutter Animation
   const handleToggle = () => {
     setIsChanging(true);
     setError('');
+    setMessage('');
     setTimeout(() => setIsSignUp(!isSignUp), 500);
     setTimeout(() => setIsChanging(false), 1000);
   };
 
-  const handleLogin = (e) => {
+  const getRedirectPath = () => location.state?.from || AUTHENTICATED_HOME;
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    
-    if (email === DEMO_USER.email && password === DEMO_USER.password) {
-      setIsChanging(true); 
-      
-      setTimeout(() => {
-        onLoginSuccess(); 
-      }, 600);
-    } else {
-      setError("ACCESS DENIED: INVALID CREDENTIALS");
+
+    setIsSubmitting(true);
+    setError('');
+    setMessage('');
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: signInEmail,
+      password: signInPassword
+    });
+
+    if (signInError) {
+      setError(signInError.message.toUpperCase());
+      setIsSubmitting(false);
+      return;
     }
+
+    setIsChanging(true);
+    setTimeout(() => {
+      navigate(getRedirectPath(), { replace: true });
+    }, 600);
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+
+    setIsSubmitting(true);
+    setError('');
+    setMessage('');
+
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email: signUpEmail,
+      password: signUpPassword,
+      options: {
+        data: {
+          full_name: fullName
+        }
+      }
+    });
+
+    if (signUpError) {
+      setError(signUpError.message.toUpperCase());
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (data.session) {
+      setIsChanging(true);
+      setTimeout(() => {
+        navigate(getRedirectPath(), { replace: true });
+      }, 600);
+      return;
+    }
+
+    setMessage('ACCOUNT CREATED. CHECK YOUR EMAIL TO CONFIRM ACCESS.');
+    setIsSubmitting(false);
   };
 
   return (
@@ -62,38 +108,65 @@ export default function AuthPage({ onLoginSuccess }) {
       {/* FORM AREA */}
       <div className={`form-area ${isChanging ? 'form-invisible' : 'form-visible'}`}>
         {!isSignUp ? (
-          /* SIGN IN FORM */
           <form className="form-node" onSubmit={handleLogin}>
             <h1>SIGN IN</h1>
             {error && <p style={{color: 'red', fontSize: '10px', marginBottom: '10px', letterSpacing: '1px'}}>{error}</p>}
+            {message && <p style={{color: 'green', fontSize: '10px', marginBottom: '10px', letterSpacing: '1px'}}>{message}</p>}
             
             <input 
               type="email" 
               placeholder="EMAIL" 
               className="vogue-input" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
+              value={signInEmail} 
+              onChange={(e) => setSignInEmail(e.target.value)} 
               required 
             />
             <input 
               type="password" 
               placeholder="PASSWORD" 
               className="vogue-input" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
+              value={signInPassword} 
+              onChange={(e) => setSignInPassword(e.target.value)} 
               required 
             />
-            <button type="submit" className="submit-btn">ACCESS PORTAL</button>
+            <button type="submit" className="submit-btn" disabled={isSubmitting}>
+              {isSubmitting ? 'ACCESSING...' : 'ACCESS PORTAL'}
+            </button>
           </form>
         ) : (
-          /* REGISTER FORM */
-          <div className="form-node">
+          <form className="form-node" onSubmit={handleRegister}>
             <h1>REGISTER</h1>
-            <input type="text" placeholder="FULL NAME" className="vogue-input" />
-            <input type="email" placeholder="EMAIL" className="vogue-input" />
-            <input type="password" placeholder="PASSWORD" className="vogue-input" />
-            <button className="submit-btn" onClick={handleToggle}>CREATE ACCOUNT</button>
-          </div>
+            {error && <p style={{color: 'red', fontSize: '10px', marginBottom: '10px', letterSpacing: '1px'}}>{error}</p>}
+            {message && <p style={{color: 'green', fontSize: '10px', marginBottom: '10px', letterSpacing: '1px'}}>{message}</p>}
+            <input
+              type="text"
+              placeholder="FULL NAME"
+              className="vogue-input"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+            />
+            <input
+              type="email"
+              placeholder="EMAIL"
+              className="vogue-input"
+              value={signUpEmail}
+              onChange={(e) => setSignUpEmail(e.target.value)}
+              required
+            />
+            <input
+              type="password"
+              placeholder="PASSWORD"
+              className="vogue-input"
+              value={signUpPassword}
+              onChange={(e) => setSignUpPassword(e.target.value)}
+              minLength={6}
+              required
+            />
+            <button type="submit" className="submit-btn" disabled={isSubmitting}>
+              {isSubmitting ? 'CREATING...' : 'CREATE ACCOUNT'}
+            </button>
+          </form>
         )}
       </div>
     </div>

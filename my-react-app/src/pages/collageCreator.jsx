@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Stage, Layer, Rect } from 'react-konva';
 import CollageBox from '../components/collageBox.jsx';
 import { fetchColors } from './features/colorForecasting/data/colorService';
@@ -299,9 +300,11 @@ export default function CollagePage() {
               ))}
             </div>
           ) : (
-            <p className="saved-colors-empty">
-              Add colors in Color Forecasting to use them here.
-            </p>
+            <Link to="/color" className="saved-colors-empty-link">
+              <span className="saved-colors-empty">
+                Add colors in Color Forecasting to use them here.
+              </span>
+            </Link>
           )}
 
           {activeLibraryColor && (

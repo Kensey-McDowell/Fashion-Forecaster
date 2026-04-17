@@ -1,3 +1,4 @@
+import { getAuthenticatedUserId } from "../../../../lib/authUser";
 import { supabase } from "../../../../lib/supabaseClient";
 
 function hexToRgb(hex) {
@@ -80,11 +81,18 @@ export async function findNearestPantones(hex, limit = 5) {
 }
 
 export async function insertColor(color) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return false;
+  }
+
   const { name, hex, season } = color;
   const { error } = await supabase
     .from("colors")
     .insert([
       {
+        user_id: userId,
         name,
         hex,
         season
@@ -100,10 +108,17 @@ export async function insertColor(color) {
 }
 
 export async function updateColorName(id, name) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return false;
+  }
+
   const { error } = await supabase
     .from("colors")
     .update({ name })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("user_id", userId);
 
   if (error) {
     console.error("Update color name error:", error);
@@ -114,10 +129,17 @@ export async function updateColorName(id, name) {
 }
 
 export async function deleteColor(id) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return false;
+  }
+
   const { error } = await supabase
     .from("colors")
     .delete()
-    .eq("id", id);
+    .eq("id", id)
+    .eq("user_id", userId);
 
   if (error) {
     console.error("Delete error:", error);
@@ -134,10 +156,17 @@ export async function createForecast({
   target_market,
   inspiration
 }) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return null;
+  }
+
   const { data, error } = await supabase
     .from("forecasts")
     .insert([
       {
+        user_id: userId,
         season,
         theme_name,
         cultural_context,
@@ -186,10 +215,17 @@ export async function getForecastById(id) {
 }
 
 export async function attachColorToForecast(forecast_id, color_id) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return null;
+  }
+
   const { data, error } = await supabase
     .from("forecast_colors")
     .insert([
       {
+        user_id: userId,
         forecast_id,
         color_id
       }
@@ -228,10 +264,17 @@ export async function createColorStory({
   design_application,
   fabric_suggestions
 }) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return null;
+  }
+
   const { data, error } = await supabase
     .from("color_stories")
     .insert([
       {
+        user_id: userId,
         color_id,
         forecast_id,
         narrative,
@@ -288,10 +331,17 @@ export async function createCollection({
   description,
   palette
 }) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return null;
+  }
+
   const { data, error } = await supabase
     .from("fashion_collections")
     .insert([
       {
+        user_id: userId,
         designer,
         brand,
         season,
@@ -354,12 +404,6 @@ export async function getCollectionsByColor(hex) {
     }
 
     return palette.some((value) => String(value).toUpperCase() === normalizedHex);
-  });
-
-  console.log("getCollectionsByColor result", {
-    hex: normalizedHex,
-    totalCollections: (data || []).length,
-    matches
   });
 
   return matches;

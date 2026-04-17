@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'; 
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 // Pages
 import IntroPage from "./pages/intro.jsx";
@@ -20,58 +20,255 @@ import UserProfile from "./pages/userProfile.jsx";
 // Components
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import { supabase } from "./lib/supabaseClient";
+import { ensureProfile } from "./lib/profileService";
+
+const AUTHENTICATED_HOME = "/intro";
+
+function AuthLoadingScreen() {
+    return (
+        <div
+            style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "48px 24px",
+                letterSpacing: "0.12em",
+                fontSize: "12px"
+            }}
+        >
+            LOADING SESSION...
+        </div>
+    );
+}
+
+function ProtectedRoute({ session, authLoading, children }) {
+    const location = useLocation();
+
+    if (authLoading) {
+        return <AuthLoadingScreen />;
+    }
+
+    if (!session) {
+        return <Navigate to="/signin" replace state={{ from: location.pathname }} />;
+    }
+
+    return children;
+}
+
+function PublicOnlyRoute({ session, authLoading, children }) {
+    const location = useLocation();
+    const redirectPath = location.state?.from || AUTHENTICATED_HOME;
+
+    if (authLoading) {
+        return <AuthLoadingScreen />;
+    }
+
+    if (session) {
+        return <Navigate to={redirectPath} replace />;
+    }
+
+    return children;
+}
+
+function AuthAwareRedirect({ session, authLoading }) {
+    if (authLoading) {
+        return <AuthLoadingScreen />;
+    }
+
+    return <Navigate to={session ? AUTHENTICATED_HOME : "/signin"} replace />;
+}
 
 function App() {
-    // Initialize state by checking localStorage
-    const [isLoggedIn, setIsLoggedIn] = useState(() => {
-        return localStorage.getItem('isLoggedIn') === 'true';
-    });
+    const [session, setSession] = useState(null);
+    const [authLoading, setAuthLoading] = useState(true);
 
-    // Logic to log in 
-    const handleLogin = () => {
-        localStorage.setItem('isLoggedIn', 'true');
-        setIsLoggedIn(true);
+    useEffect(() => {
+        let isMounted = true;
+
+        const syncProfile = async (nextSession) => {
+            if (!nextSession?.user) {
+                return;
+            }
+
+            try {
+                await ensureProfile(nextSession.user);
+            } catch (error) {
+                console.error("Profile sync failed:", error);
+            }
+        };
+
+        const initializeSession = async () => {
+            const { data, error } = await supabase.auth.getSession();
+
+            if (!isMounted) {
+                return;
+            }
+
+            if (error) {
+                console.error("Failed to load Supabase session:", error.message);
+                setSession(null);
+            } else {
+                setSession(data.session);
+                void syncProfile(data.session);
+            }
+
+            setAuthLoading(false);
+        };
+
+        initializeSession();
+
+        const {
+            data: { subscription }
+        } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+            if (!isMounted) {
+                return;
+            }
+
+            setSession(nextSession);
+            setAuthLoading(false);
+            void syncProfile(nextSession);
+        });
+
+        return () => {
+            isMounted = false;
+            subscription.unsubscribe();
+        };
+    }, []);
+
+    const handleLogout = async () => {
+        const { error } = await supabase.auth.signOut();
+
+        if (error) {
+            console.error("Failed to sign out:", error.message);
+        }
     };
 
-    // Logic to log out 
-    const handleLogout = () => {
-        localStorage.removeItem('isLoggedIn');
-        setIsLoggedIn(false);
-    };
+    const isAuthenticated = Boolean(session);
+    const user = session?.user ?? null;
 
     return (
         <BrowserRouter>
             <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-                {/* Pass isLoggedIn to Navbar to swap the "Sign In" button */}
-                <Navbar isLoggedIn={isLoggedIn} />
+                <Navbar isLoggedIn={isAuthenticated} />
                 
                 <Routes>
-                    <Route path="/" element={<IntroPage />} />
-                    <Route path="/intro" element={<IntroPage />} />
-                    <Route path="/about" element={<AboutPage />} /> 
-                    <Route path="/trend" element={<TrendPage />} />  
-                    <Route path="/color" element={<ColorPage />} />
-                    <Route path="/forecast-demo" element={<ForecastDemo />} />
-                    <Route path="/trend-boards" element={<TrendBoards />} />
-                    <Route path="/boards/:boardId" element={<TrendBoardDetail />} />
-                    <Route path="/collage" element={<CollagePage />} />
-                    <Route path="/market" element={<MarketPage />} />
-                    <Route path="/fashionWeek" element={<FashionPage />} /> 
-                    <Route path="/street" element={<StreetStylePage />} />
+                    <Route
+                        path="/"
+                        element={<AuthAwareRedirect session={session} authLoading={authLoading} />}
+                    />
+                    <Route
+                        path="/intro"
+                        element={
+                            <ProtectedRoute session={session} authLoading={authLoading}>
+                                <IntroPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/about"
+                        element={
+                            <ProtectedRoute session={session} authLoading={authLoading}>
+                                <AboutPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/trend"
+                        element={
+                            <ProtectedRoute session={session} authLoading={authLoading}>
+                                <TrendPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/color"
+                        element={
+                            <ProtectedRoute session={session} authLoading={authLoading}>
+                                <ColorPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/forecast-demo"
+                        element={
+                            <ProtectedRoute session={session} authLoading={authLoading}>
+                                <ForecastDemo />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/trend-boards"
+                        element={
+                            <ProtectedRoute session={session} authLoading={authLoading}>
+                                <TrendBoards />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/boards/:boardId"
+                        element={
+                            <ProtectedRoute session={session} authLoading={authLoading}>
+                                <TrendBoardDetail />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/collage"
+                        element={
+                            <ProtectedRoute session={session} authLoading={authLoading}>
+                                <CollagePage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/market"
+                        element={
+                            <ProtectedRoute session={session} authLoading={authLoading}>
+                                <MarketPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/fashionWeek"
+                        element={
+                            <ProtectedRoute session={session} authLoading={authLoading}>
+                                <FashionPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/street"
+                        element={
+                            <ProtectedRoute session={session} authLoading={authLoading}>
+                                <StreetStylePage />
+                            </ProtectedRoute>
+                        }
+                    />
                     
-                    {/* If logged in, redirect away from sign-in page to profile */}
                     <Route 
                         path="/signin" 
-                        element={!isLoggedIn ? <SignPage onLoginSuccess={handleLogin} /> : <Navigate to="/profile" />} 
+                        element={
+                            <PublicOnlyRoute session={session} authLoading={authLoading}>
+                                <SignPage />
+                            </PublicOnlyRoute>
+                        }
                     />
                     
-                    {/* If logged out, redirect profile access to sign-in */}
                     <Route 
                         path="/profile" 
-                        element={isLoggedIn ? <UserProfile onLogout={handleLogout} /> : <Navigate to="/signin" />} 
+                        element={
+                            <ProtectedRoute session={session} authLoading={authLoading}>
+                                <UserProfile user={user} onLogout={handleLogout} />
+                            </ProtectedRoute>
+                        }
                     />
                     
-                    <Route path="*" element={<IntroPage />} />
+                    <Route
+                        path="*"
+                        element={<AuthAwareRedirect session={session} authLoading={authLoading} />}
+                    />
                 </Routes>
                 <Footer />
             </div>

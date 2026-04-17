@@ -1,3 +1,4 @@
+import { getAuthenticatedUserId } from "../../../../lib/authUser";
 import { supabase } from "../../../../lib/supabaseClient";
 
 export async function createColorStory({
@@ -6,10 +7,17 @@ export async function createColorStory({
   design_application,
   fabric_suggestions
 }) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return null;
+  }
+
   const { data, error } = await supabase
     .from("color_stories")
     .insert([
       {
+        user_id: userId,
         color_id,
         narrative,
         design_application,
@@ -47,6 +55,12 @@ export async function updateColorStory(id, {
   design_application,
   fabric_suggestions
 }) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return null;
+  }
+
   const { data, error } = await supabase
     .from("color_stories")
     .update({
@@ -55,6 +69,7 @@ export async function updateColorStory(id, {
       fabric_suggestions
     })
     .eq("id", id)
+    .eq("user_id", userId)
     .select()
     .single();
 
@@ -64,4 +79,25 @@ export async function updateColorStory(id, {
   }
 
   return data;
+}
+
+export async function deleteColorStory(id) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return false;
+  }
+
+  const { error } = await supabase
+    .from("color_stories")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("Delete color story error:", error);
+    return false;
+  }
+
+  return true;
 }
