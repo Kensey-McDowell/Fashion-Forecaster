@@ -55,10 +55,14 @@ export default function TrendBoardDetail() {
     }
 
     try {
-      const didAdd = await addColorToBoard(boardId, colorId);
+      const result = await addColorToBoard(boardId, colorId);
 
-      if (!didAdd) {
-        setBoardMessage("This color is already on the board or could not be added.");
+      if (!result.ok) {
+        setBoardMessage(
+          result.reason === "duplicate"
+            ? "This color is already on the board."
+            : "Unable to add color right now."
+        );
         return;
       }
 

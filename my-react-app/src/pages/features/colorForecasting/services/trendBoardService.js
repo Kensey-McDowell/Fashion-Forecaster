@@ -1,6 +1,10 @@
 import { getAuthenticatedUserId } from "../../../../lib/authUser";
 import { supabase } from "../../../../lib/supabaseClient";
 
+function isDuplicateBoardColorError(error) {
+  return error?.code === "23505" || error?.status === 409;
+}
+
 export async function getTrendBoards() {
   const userId = await getAuthenticatedUserId();
 
@@ -120,7 +124,7 @@ export async function addColorToBoard(boardId, colorId) {
   const userId = await getAuthenticatedUserId();
 
   if (!userId) {
-    return false;
+    return { ok: false, reason: "unauthenticated" };
   }
 
   const { error } = await supabase
@@ -134,11 +138,21 @@ export async function addColorToBoard(boardId, colorId) {
     ]);
 
   if (error) {
-    console.error("Add color to board error:", error);
-    return false;
+    if (isDuplicateBoardColorError(error)) {
+      return { ok: false, reason: "duplicate" };
+    }
+
+    console.error("Add color to board error:", {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      status: error.status
+    });
+    return { ok: false, reason: "error" };
   }
 
-  return true;
+  return { ok: true };
 }
 
 export async function removeColorFromBoard(boardId, colorId) {

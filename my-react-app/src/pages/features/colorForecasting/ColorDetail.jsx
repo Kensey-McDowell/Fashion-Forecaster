@@ -151,10 +151,14 @@ export default function ColorDetail({ colorId, onBack }) {
     setIsAddingToBoard(true);
 
     try {
-      const entry = await addColorToBoard(selectedBoardId, color.id);
+      const result = await addColorToBoard(selectedBoardId, color.id);
 
-      if (!entry) {
-        setBoardError("This color could not be added. It may already be on the board.");
+      if (!result.ok) {
+        setBoardError(
+          result.reason === "duplicate"
+            ? "This color is already on the board."
+            : "This color could not be added right now."
+        );
         return;
       }
 
