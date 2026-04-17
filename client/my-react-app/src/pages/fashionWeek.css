@@ -1,5 +1,7 @@
 *, *::before, *::after{
-    box-sizing: border-box; margin: 0; padding: 0;
+    box-sizing: border-box;
+    margin: 0; 
+    padding: 0;
   }
 
   /* WELCOME SECTION */
@@ -15,6 +17,46 @@
     color: #111;
     line-height: 1;
     margin-bottom: 20px;
+  }
+
+  /*Youtube function */
+  .yt_banner {
+    overflow: hidden;
+    border-top: 1px solid black;
+    border-bottom: 2px solid black;
+    white-space: nowrap;
+    background-color: lightgrey;
+  }
+  
+  .yt_track {
+    display: flex;
+    width: max-content;
+    animation: scroll 20s linear infinite reverse;
+  }
+  
+  .yt_content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 60px;
+    font-size: 20px;
+
+  }
+  
+  .yt_button {
+    text-decoration: none;
+    color: black;
+    font-weight: bold;
+  }
+  
+  /* animation */
+  @keyframes scroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
   }
 
   /* FILTER DROPDOWNS */
@@ -125,7 +167,7 @@
 
   /* DESIGNER CARD Function */
   .designer_card {
-    background: #d9d9d9;
+    background: lightgray;;
     aspect-ratio: 1 / 1;
     display: flex;
     align-items: center;
