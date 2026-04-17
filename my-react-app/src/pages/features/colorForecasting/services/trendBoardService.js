@@ -2,9 +2,16 @@ import { getAuthenticatedUserId } from "../../../../lib/authUser";
 import { supabase } from "../../../../lib/supabaseClient";
 
 export async function getTrendBoards() {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from("trend_boards")
     .select("*")
+    .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -18,7 +25,8 @@ export async function getTrendBoards() {
       const { count, error: countError } = await supabase
         .from("trend_board_colors")
         .select("*", { count: "exact", head: true })
-        .eq("board_id", board.id);
+        .eq("board_id", board.id)
+        .eq("user_id", userId);
 
       if (countError) {
         console.error("Get trend board color count error:", countError);
@@ -112,10 +120,10 @@ export async function addColorToBoard(boardId, colorId) {
   const userId = await getAuthenticatedUserId();
 
   if (!userId) {
-    return null;
+    return false;
   }
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("trend_board_colors")
     .insert([
       {
@@ -123,16 +131,14 @@ export async function addColorToBoard(boardId, colorId) {
         board_id: boardId,
         color_id: colorId
       }
-    ])
-    .select()
-    .single();
+    ]);
 
   if (error) {
     console.error("Add color to board error:", error);
-    return null;
+    return false;
   }
 
-  return data;
+  return true;
 }
 
 export async function removeColorFromBoard(boardId, colorId) {
@@ -158,10 +164,17 @@ export async function removeColorFromBoard(boardId, colorId) {
 }
 
 export async function getBoardColors(boardId) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from("trend_board_colors")
     .select("colors(*)")
-    .eq("board_id", boardId);
+    .eq("board_id", boardId)
+    .eq("user_id", userId);
 
   if (error) {
     console.error("Get board colors error:", error);

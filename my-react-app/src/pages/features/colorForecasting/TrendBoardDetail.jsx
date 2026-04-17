@@ -49,19 +49,24 @@ export default function TrendBoardDetail() {
   async function handleAddColor(colorId) {
     setBoardMessage("");
 
-    try {
-      const entry = await addColorToBoard(boardId, colorId);
+    if (boardColors.some((color) => color.id === colorId)) {
+      setBoardMessage("This color is already on the board or could not be added.");
+      return;
+    }
 
-      if (!entry) {
+    try {
+      const didAdd = await addColorToBoard(boardId, colorId);
+
+      if (!didAdd) {
         setBoardMessage("This color is already on the board or could not be added.");
         return;
       }
 
       const addedColor = allColors.find((color) => color.id === colorId);
       if (addedColor) {
+        setBoardColors((currentColors) => [...currentColors, addedColor]);
         setBoardMessage(`${addedColor.name} added to ${board?.name || "board"}.`);
       }
-      await loadBoardDetail();
     } catch (error) {
       console.error("Unable to add color to board:", error);
       setBoardMessage("Unable to add color right now.");
@@ -81,9 +86,9 @@ export default function TrendBoardDetail() {
 
       const removedColor = boardColors.find((color) => color.id === colorId);
       if (removedColor) {
+        setBoardColors((currentColors) => currentColors.filter((color) => color.id !== colorId));
         setBoardMessage(`${removedColor.name} removed from ${board?.name || "board"}.`);
       }
-      await loadBoardDetail();
     } catch (error) {
       console.error("Unable to remove color from board:", error);
       setBoardMessage("Unable to remove this color right now.");
