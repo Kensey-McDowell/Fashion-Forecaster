@@ -426,9 +426,9 @@ export default function ColorDetail({ colorId, onBack }) {
             gap: "28px"
           }}
         >
-          {pantones.map((pantone) => (
+          {pantones.map((pantone, index) => (
             <div
-              key={pantone.id}
+              key={pantone.id || pantone.code || pantone.hex || `${color.id}-pantone-${index}`}
               style={{
                 padding: "24px",
                 border: "1px solid #e5dfd7",

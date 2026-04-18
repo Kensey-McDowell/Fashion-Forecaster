@@ -97,8 +97,8 @@ export default function ForecastDetail({ forecastId }) {
                 {color.name} {color.hex}
               </p>
               <div style={{ display: "grid", gap: "8px" }}>
-                {pantones.map((pantone) => (
-                  <p key={pantone.id} style={{ margin: 0, color: "#555" }}>
+                {pantones.map((pantone, index) => (
+                  <p key={pantone.id || pantone.code || pantone.hex || `${color.id}-${index}`} style={{ margin: 0, color: "#555" }}>
                     {pantone.name} ({pantone.code}) {pantone.hex}
                   </p>
                 ))}

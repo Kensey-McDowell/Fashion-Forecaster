@@ -161,7 +161,7 @@ export default function IntroPage() {
       </div>
 
       <div style={{ position: 'absolute', inset: 0 }}>
-        <Canvas camera={{ position: [0, 0, 5], fov: 30 }} alpha={true}>
+        <Canvas camera={{ position: [0, 0, 5], fov: 30 }}>
           <ambientLight intensity={2} />
           <pointLight position={[5, 5, 5]} />
           <Butterfly phase={phase} />

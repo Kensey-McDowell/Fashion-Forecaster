@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Stage, Layer, Rect } from 'react-konva';
 import CollageBox from '../components/collageBox.jsx';
 import { fetchColors } from './features/colorForecasting/data/colorService';
@@ -12,6 +12,7 @@ const BASE_WIDTH = 800;
 const BASE_HEIGHT = 600;
 
 export default function CollagePage() {
+  const navigate = useNavigate();
   const [rects, setRects] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [bgColor, setBgColor] = useState('#ffffff');
@@ -110,7 +111,15 @@ export default function CollagePage() {
 
       try {
         const stories = await fetchColorStoriesByColor(activeLibraryColorId);
-        setActiveLibraryStory((stories || [])[0] || null);
+        const nextStory = (stories || [])[0] || null;
+
+        if (!nextStory) {
+          setActiveLibraryStory(null);
+          navigate('/color', { state: { selectedColorId: activeLibraryColorId } });
+          return;
+        }
+
+        setActiveLibraryStory(nextStory);
       } catch (error) {
         console.error('Unable to load color story:', error);
         setActiveLibraryStory(null);
@@ -120,7 +129,7 @@ export default function CollagePage() {
     }
 
     loadActiveStory();
-  }, [activeLibraryColorId, isAuthenticated]);
+  }, [activeLibraryColorId, isAuthenticated, navigate]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -361,47 +370,47 @@ export default function CollagePage() {
           )}
 
           {activeLibraryColor && (
-            <div style={{ marginTop: "20px", display: "grid", gap: "14px" }}>
-              <p style={{ margin: 0, fontSize: "12px", letterSpacing: "0.14em", textTransform: "uppercase", color: "#777" }}>
+            <div className="story-panel">
+              <p className="story-panel-label">
                 {activeLibraryColor.name} Story
               </p>
 
               {isLoadingStory ? (
-                <p style={{ margin: 0, color: "#777" }}>Loading story...</p>
+                <p className="story-panel-empty">Loading story...</p>
               ) : activeLibraryStory ? (
                 <>
-                  <div>
+                  <div className="story-panel-copy">
                     <strong>Narrative</strong>
-                    <p style={{ margin: "6px 0 0", lineHeight: 1.5 }}>{activeLibraryStory.narrative}</p>
+                    <p>{activeLibraryStory.narrative}</p>
                   </div>
 
-                  <div>
+                  <div className="story-panel-copy">
                     <strong>Design Application</strong>
-                    <p style={{ margin: "6px 0 0", lineHeight: 1.5 }}>{activeLibraryStory.design_application}</p>
+                    <p>{activeLibraryStory.design_application}</p>
                   </div>
 
-                  <div>
+                  <div className="story-panel-copy">
                     <strong>Fabric Suggestions</strong>
-                    <p style={{ margin: "6px 0 0", lineHeight: 1.5 }}>{activeLibraryStory.fabric_suggestions}</p>
+                    <p>{activeLibraryStory.fabric_suggestions}</p>
                   </div>
 
-                  <div style={{ display: "grid", gap: "8px" }}>
-                    <button type="button" className="secondary-btn" onClick={() => addColorSwatchToCanvas(activeLibraryColor)}>
+                  <div className="story-panel-actions">
+                    <button type="button" className="story-action-btn" onClick={() => addColorSwatchToCanvas(activeLibraryColor)}>
                       Add Color Swatch
                     </button>
-                    <button type="button" className="secondary-btn" onClick={() => addStoryTextToCanvas(activeLibraryStory.narrative)}>
+                    <button type="button" className="story-action-btn" onClick={() => addStoryTextToCanvas(activeLibraryStory.narrative)}>
                       Add Narrative
                     </button>
-                    <button type="button" className="secondary-btn" onClick={() => addStoryTextToCanvas(activeLibraryStory.design_application)}>
+                    <button type="button" className="story-action-btn" onClick={() => addStoryTextToCanvas(activeLibraryStory.design_application)}>
                       Add Design Notes
                     </button>
-                    <button type="button" className="secondary-btn" onClick={() => addStoryTextToCanvas(activeLibraryStory.fabric_suggestions)}>
+                    <button type="button" className="story-action-btn" onClick={() => addStoryTextToCanvas(activeLibraryStory.fabric_suggestions)}>
                       Add Fabric Notes
                     </button>
                   </div>
                 </>
               ) : (
-                <p style={{ margin: 0, color: "#777" }}>
+                <p className="story-panel-empty">
                   No story yet for this color.
                 </p>
               )}

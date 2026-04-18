@@ -1,6 +1,8 @@
 import { getAuthenticatedUserId } from "../../../../lib/authUser";
 import { supabase } from "../../../../lib/supabaseClient";
 
+let isCollectionsTableUnavailable = false;
+
 function hexToRgb(hex) {
   const normalizedHex = hex.replace("#", "");
   const value = normalizedHex.length === 3
@@ -362,12 +364,20 @@ export async function createCollection({
 }
 
 export async function getCollections() {
+  if (isCollectionsTableUnavailable) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from("fashion_collections")
     .select("*")
     .order("created_at", { ascending: false });
 
   if (error) {
+    if (error.code === "PGRST205" || error.message?.includes("fashion_collections")) {
+      isCollectionsTableUnavailable = true;
+      return [];
+    }
     console.error("Get collections error:", error);
     return [];
   }
@@ -376,12 +386,20 @@ export async function getCollections() {
 }
 
 export async function getCollectionsByColor(hex) {
+  if (isCollectionsTableUnavailable) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from("fashion_collections")
     .select("*")
     .order("created_at", { ascending: false });
 
   if (error) {
+    if (error.code === "PGRST205" || error.message?.includes("fashion_collections")) {
+      isCollectionsTableUnavailable = true;
+      return [];
+    }
     console.error("Get collections by color error:", error);
     return [];
   }
