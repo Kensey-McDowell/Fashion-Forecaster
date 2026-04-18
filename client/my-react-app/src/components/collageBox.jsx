@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { Group, Rect, Image, Transformer, Text } from 'react-konva';
 import useImage from 'use-image';
 
-const CollageBox = ({ shapeProps, isSelected, onSelect, onChange, gridSize }) => {
+const CollageBox = ({ shapeProps, isSelected, onSelect, onContextMenu, onChange, gridSize }) => {
   const shapeRef = useRef();
   const trRef = useRef();
   const [img] = useImage(shapeProps.imageSrc || '');
@@ -91,6 +91,7 @@ const CollageBox = ({ shapeProps, isSelected, onSelect, onChange, gridSize }) =>
     draggable: true,
     onClick: onSelect,
     onTap: onSelect,
+    onContextMenu,
     dragBoundFunc: (pos) => ({
       x: Math.round(pos.x / gridSize) * gridSize,
       y: Math.round(pos.y / gridSize) * gridSize,
@@ -214,7 +215,16 @@ const CollageBox = ({ shapeProps, isSelected, onSelect, onChange, gridSize }) =>
       </Group>
     );
   } else if (shapeProps.imageSrc) {
-    content = <Image image={img} {...commonProps} />;
+    content = (
+      <Image
+        image={img}
+        cropX={shapeProps.cropX || 0}
+        cropY={shapeProps.cropY || 0}
+        cropWidth={shapeProps.cropWidth || shapeProps.sourceWidth || shapeProps.width}
+        cropHeight={shapeProps.cropHeight || shapeProps.sourceHeight || shapeProps.height}
+        {...commonProps}
+      />
+    );
   } else {
     content = <Rect {...commonProps} />;
   }

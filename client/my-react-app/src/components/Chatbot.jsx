@@ -52,16 +52,23 @@ export default function Chatbot() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: newMessages }),
       });
-
-      if (!res.ok) throw new Error("Server error");
-
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.content || data.error || "Server error");
+      }
+
       const aiResponse = data.content || "Strategic insight currently unavailable.";
 
       setMessages([...newMessages, { role: "assistant", content: aiResponse }]);
     } catch (err) {
       console.error("Chat Error:", err);
-      setMessages([...newMessages, { role: "assistant", content: "Systems offline. Please verify server connection." }]);
+      setMessages([
+        ...newMessages,
+        {
+          role: "assistant",
+          content: err.message || "Systems offline. Please verify server connection."
+        }
+      ]);
     }
   };
 
