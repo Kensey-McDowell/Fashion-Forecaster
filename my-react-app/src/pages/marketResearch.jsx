@@ -1,4 +1,4 @@
-import React,  {useState} from 'react';
+import React,  {useState, useEffect, use} from 'react';
 import "./marketResearch.css";
 
 function MarketResearch() {
@@ -22,6 +22,143 @@ function MarketResearch() {
   ];
   
   const [activeIndex, setActiveIndex] = useState(null);
+  const [activeCity, setActiveCity] = useState(null);
+  const [images, setImages] = useState({});
+  const [loadingCity, setLoadingCity] = useState(false);
+  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
+  const [hoveredCity, setHoveredCity] = useState(null);
+  const [expandedImage, setExpandedImage] = useState(null);
+  const [hoveringIcon, setHoveringIcon] = useState(false);
+  const intervalRef = React.useRef({});
+
+  const fetchCityImages = async (city) => {
+    setLoadingCity(city);
+
+    try {
+      const res = await fetch(
+        `https://api.pexels.com/v1/search?query=${city} street style&per_page=1000000`,
+        {
+          headers: {
+            Authorization: import.meta.env.VITE_PEXELS_API_KEY
+          }
+        }
+      );
+
+      const data = await res.json();
+      const newPhotos = data.photos;
+
+      const shownImageIds = new Set(images[city]?.shownImageIds || []);
+      const availablePhotos = newPhotos.filter(p => !shownImageIds.has(p.id));
+
+      if (availablePhotos.length === 0) {
+        console.log("All images have been shown for", city, "resetting...");
+        shownImageIds.clear();
+        availablePhotos.push(...newPhotos);
+      }
+      
+      const randomIndex = Math.floor(Math.random() * availablePhotos.length);
+      const selectedImage = availablePhotos[randomIndex];
+
+      setImages(prev => ({
+        ...prev,
+        [city]: {
+          photos: newPhotos,
+          photo: selectedImage,
+          shownImageIds: new Set([...shownImageIds, selectedImage.id])
+        }
+      }));
+    } catch (err) {
+      console.error("Error fetching images for", city, err);
+    }
+    
+    setLoadingCity(null);
+    };
+
+    const startAutoShuffle = (city) => {
+      if (intervalRef.current[city]) return;
+
+      intervalRef.current[city] = setInterval(() => {
+        shuffleCityImage(city);
+      }, 15000);
+    };
+
+    const stopAutoShuffle = (city) => {
+      if (intervalRef.current[city]) {
+        clearInterval(intervalRef.current[city]);
+        delete intervalRef.current[city];
+      }
+    };
+
+    const shuffleCityImage = (city) => {
+      setImages(prev => {
+        const cityData = prev[city];
+        if (!cityData?.photos) return prev;
+
+        let shown = new Set(cityData.shownImageIds || []);
+        let available = cityData.photos.filter(p => !shown.has(p.id));
+
+        if (available.length === 0) {
+          shown = new Set();
+          available = cityData.photos;
+        }
+
+        const random = available[Math.floor(Math.random() * available.length)];
+
+        shown.add(random.id);
+
+        return {
+          ...prev,
+          [city]: {
+            ...cityData,
+            photo: random,
+            shownImageIds: shown
+          }
+        };
+      });
+    }
+
+    useEffect(() => {
+      const cities = ["New York", "Los Angeles", "London", "Milan", "Paris", "Tokyo", "Seoul"];
+      cities.forEach(city => fetchCityImages(city));
+    }, []);
+
+    useEffect(() => {
+      const handleKeyDown = (e) => {
+        if (e.key === "Escape") {
+          setExpandedImage(null);
+        }
+      };
+
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }, []);
+
+    useEffect(() => {
+      if(expandedImage) {
+        document.body.style.overflow = "hidden";
+      } else {
+        document.body.style.overflow = "auto";
+      }
+    }, [expandedImage]);
+
+    useEffect(() => {
+      return () => {
+        Object.values(intervalRef.current).forEach(clearInterval);
+      };
+    }, []);
+
+    useEffect(() => {
+      const cities = ["New York", "Los Angeles", "London", "Milan", "Paris", "Tokyo", "Seoul"];
+
+      cities.forEach(city => {
+        startAutoShuffle(city);
+      });
+
+      return () => {
+        cities.forEach(city => stopAutoShuffle(city));
+      };
+    }, []);
+
   return(
     <div className="market-research-container">
       <h1>Market Research</h1>
@@ -126,7 +263,93 @@ function MarketResearch() {
       <section className="section">
         <h2>Street Style Monitoring</h2>
         <div className="city-grid">
-          {[  {name: "New York", link: "https://theimpression.com/street-style/new-york-fashion-week/"},
+          {["New York", "Los Angeles", "London", "Milan", "Paris", "Tokyo", "Seoul"].map((city, index) => (
+            <div
+              className="city-item"
+              key={index}
+              onClick={() => {
+                setActiveCity(city);
+                fetchCityImages(city);
+              }}
+              >
+                <div className="city-card"
+                  onMouseEnter={() => {
+                    setHoveredCity(city)
+                    stopAutoShuffle(city);
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredCity(null);
+                    startAutoShuffle(city);
+                  }}
+                  onMouseMove={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+
+                    setCursorPos({
+                      x: e.clientX - rect.left,
+                      y: e.clientY - rect.top
+                    });
+                  }}
+                  style={{
+                    backgroundImage: images[city]?.photo?.src
+                    ? `url(${images[city].photo.src.medium})` 
+                    : "none"
+                  }}
+                >
+
+                  {hoveredCity === city && images[city]?.photo && (
+                    <div
+                    className="expand-icon"
+                    onMouseEnter={() => setHoveringIcon(true)}
+                    onMouseLeave={() => setHoveringIcon(false)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExpandedImage(images[city].photo.src.large ||
+                        images[city].photo.src.original ||
+                        images[city].photo.src.medium
+                      );
+                    }}
+                    >
+                      ⛶
+                    </div>
+                  )}
+
+                  {loadingCity === city && (
+                    <div className="loading-overlay">Loading images...</div>
+                  )}
+
+                  {hoveredCity === city && images[city] && !hoveringIcon && (
+                    <div
+                      className="cursor-hint"
+                      style={{
+                        left: cursorPos.x,
+                        top: cursorPos.y,
+                      }}
+                    >
+                      {images[city].caption || " Click to refresh"}
+                    </div>
+                  )}
+                </div>
+
+
+              <div className="city-label">
+                <h3>{city}</h3>
+              </div>
+            </div>
+          ))}
+
+              {/* <div className="image-grid">
+                {cityImages[city]?.map((img) => (
+                  <img
+                    key={img.id}
+                    src={img.src.medium}
+                    alt={city}
+                  />
+                ))}
+              </div> */}
+            {/* </div> */}
+          {/* ))} */}
+
+          {/* {[  {name: "New York", link: "https://theimpression.com/street-style/new-york-fashion-week/"},
               {name: "Los Angeles", link: "https://www.whowhatwear.com/tag/los-angeles"},
               {name: "London", link: "https://theimpression.com/street-style/london-fashion-week/"},
               {name: "Milan", link: "https://www.whowhatwear.com/fashion/street-style/milan-street-style-trends"},
@@ -138,7 +361,7 @@ function MarketResearch() {
               <h3>{city.name}</h3>
               <p>Emerging street style trends in {city.name}.</p>
             </div>
-          ))}
+          ))} */}
         </div>
       </section>
 
@@ -164,6 +387,33 @@ function MarketResearch() {
           </div>
         ))}
       </section>
+
+      {expandedImage && (
+        <div
+        className="image-modal-overlay"
+        onClick={() => setExpandedImage(null)}
+        >
+          <div
+          className="image-modal-content"
+          onClick={(e) => e.stopPropagation()}
+          >
+            <img src={expandedImage} alt="expanded Street Style" />
+
+            <button
+            className="close-modal"
+            onClick={() => setExpandedImage(null)}
+            >
+              ✕
+              </button>
+          </div>
+        </div>
+      )}
+
+      <div className="pexels-credit">
+        <a href="https://www.pexels.com" target="_blank" rel="noreferrer">
+          Photos provided by Pexels
+        </a>
+      </div>
     </div>
   );
 }
