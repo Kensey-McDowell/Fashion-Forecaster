@@ -228,6 +228,26 @@ body {
   color: #222222;
 }
 
+.story-panel-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--pantone-black);
+  background: #ffffff;
+  color: var(--pantone-black);
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.story-panel-link:hover {
+  background: #f6f4ef;
+}
+
 .story-panel-actions {
   display: flex;
   flex-direction: column;

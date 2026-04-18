@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Stage, Layer, Rect } from 'react-konva';
 import CollageBox from '../components/collageBox.jsx';
 import { fetchColors } from './features/colorForecasting/data/colorService';
@@ -12,7 +12,6 @@ const BASE_WIDTH = 800;
 const BASE_HEIGHT = 600;
 
 export default function CollagePage() {
-  const navigate = useNavigate();
   const [rects, setRects] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [bgColor, setBgColor] = useState('#ffffff');
@@ -112,13 +111,6 @@ export default function CollagePage() {
       try {
         const stories = await fetchColorStoriesByColor(activeLibraryColorId);
         const nextStory = (stories || [])[0] || null;
-
-        if (!nextStory) {
-          setActiveLibraryStory(null);
-          navigate('/color', { state: { selectedColorId: activeLibraryColorId } });
-          return;
-        }
-
         setActiveLibraryStory(nextStory);
       } catch (error) {
         console.error('Unable to load color story:', error);
@@ -129,7 +121,7 @@ export default function CollagePage() {
     }
 
     loadActiveStory();
-  }, [activeLibraryColorId, isAuthenticated, navigate]);
+  }, [activeLibraryColorId, isAuthenticated]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -410,9 +402,18 @@ export default function CollagePage() {
                   </div>
                 </>
               ) : (
-                <p className="story-panel-empty">
-                  No story yet for this color.
-                </p>
+                <>
+                  <p className="story-panel-empty">
+                    No story yet for this color.
+                  </p>
+                  <Link
+                    to="/color"
+                    state={{ selectedColorId: activeLibraryColor.id }}
+                    className="story-panel-link"
+                  >
+                    Open in Color Forecasting
+                  </Link>
+                </>
               )}
             </div>
           )}
