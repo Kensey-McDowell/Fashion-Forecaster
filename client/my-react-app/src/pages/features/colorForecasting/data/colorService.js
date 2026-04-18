@@ -1,4 +1,5 @@
-const API_URL = "http://localhost:3001/api";
+import { getAuthenticatedUserId } from "../../../../lib/authUser";
+import { supabase } from "../../../../lib/supabaseClient";
 
 function hexToRgb(hex) {
   const normalizedHex = hex.replace("#", "");
@@ -22,14 +23,17 @@ function getRgbDistance(source, target) {
 }
 
 export async function fetchColors() {
-  try {
-    const response = await fetch(`${API_URL}/colors`);
-    const data = await response.json();
-    return data;
-  } catch (error) {
+  const { data, error } = await supabase
+    .from("colors")
+    .select("*")
+    .order("created_at", { ascending: true });
+
+  if (error) {
     console.error("Fetch error:", error);
     return [];
   }
+
+  return data;
 }
 
 export async function getColors() {
@@ -37,77 +41,112 @@ export async function getColors() {
 }
 
 export async function getColorById(id) {
-  try {
-    const response = await fetch(`${API_URL}/colors/${id}`);
-    const data = await response.json();
-    return data;
-  } catch (error) {
+  const { data, error } = await supabase
+    .from("colors")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
     console.error("Get color by id error:", error);
     return null;
   }
+
+  return data;
 }
 
 export async function findNearestPantones(hex, limit = 5) {
-  try {
-    const response = await fetch(`${API_URL}/pantone`);
-    const data = await response.json();
-    const sourceRgb = hexToRgb(hex);
+  const { data, error } = await supabase
+    .from("pantone_colors")
+    .select("*");
 
-    return (data || [])
-      .map((pantone) => ({
-        ...pantone,
-        distance: getRgbDistance(sourceRgb, {
-          r: pantone.r,
-          g: pantone.g,
-          b: pantone.b
-        })
-      }))
-      .sort((left, right) => left.distance - right.distance)
-      .slice(0, limit);
-  } catch (error) {
+  if (error) {
     console.error("Find nearest Pantones error:", error);
     return [];
   }
+
+  const sourceRgb = hexToRgb(hex);
+
+  return (data || [])
+    .map((pantone) => ({
+      ...pantone,
+      distance: getRgbDistance(sourceRgb, {
+        r: pantone.r,
+        g: pantone.g,
+        b: pantone.b
+      })
+    }))
+    .sort((left, right) => left.distance - right.distance)
+    .slice(0, limit);
 }
 
 export async function insertColor(color) {
-  try {
-    const response = await fetch(`${API_URL}/colors`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(color),
-    });
-    return response.ok;
-  } catch (error) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return false;
+  }
+
+  const { name, hex, season } = color;
+  const { error } = await supabase
+    .from("colors")
+    .insert([
+      {
+        user_id: userId,
+        name,
+        hex,
+        season
+      }
+    ]);
+
+  if (error) {
     console.error("Insert error:", error);
     return false;
   }
+
+  return true;
 }
 
 export async function updateColorName(id, name) {
-  try {
-    const response = await fetch(`${API_URL}/colors/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
-    });
-    return response.ok;
-  } catch (error) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return false;
+  }
+
+  const { error } = await supabase
+    .from("colors")
+    .update({ name })
+    .eq("id", id)
+    .eq("user_id", userId);
+
+  if (error) {
     console.error("Update color name error:", error);
     return false;
   }
+
+  return true;
 }
 
 export async function deleteColor(id) {
-  try {
-    const response = await fetch(`${API_URL}/colors/${id}`, {
-      method: "DELETE",
-    });
-    return response.ok;
-  } catch (error) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return false;
+  }
+
+  const { error } = await supabase
+    .from("colors")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
+
+  if (error) {
     console.error("Delete error:", error);
     return false;
   }
+
+  return true;
 }
 
 export async function createForecast({
@@ -117,66 +156,105 @@ export async function createForecast({
   target_market,
   inspiration
 }) {
-  try {
-    const response = await fetch(`${API_URL}/forecasts`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ season, theme_name, cultural_context, target_market, inspiration }),
-    });
-    const data = await response.json();
-    return data;
-  } catch (error) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("forecasts")
+    .insert([
+      {
+        user_id: userId,
+        season,
+        theme_name,
+        cultural_context,
+        target_market,
+        inspiration
+      }
+    ])
+    .select()
+    .single();
+
+  if (error) {
     console.error("Create forecast error:", error);
     return null;
   }
+
+  return data;
 }
 
 export async function getForecasts() {
-  try {
-    const response = await fetch(`${API_URL}/forecasts`);
-    const data = await response.json();
-    return data;
-  } catch (error) {
+  const { data, error } = await supabase
+    .from("forecasts")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
     console.error("Get forecasts error:", error);
     return [];
   }
+
+  return data;
 }
 
 export async function getForecastById(id) {
-  try {
-    const response = await fetch(`${API_URL}/forecasts/${id}`);
-    const data = await response.json();
-    return data;
-  } catch (error) {
+  const { data, error } = await supabase
+    .from("forecasts")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
     console.error("Get forecast by id error:", error);
     return null;
   }
+
+  return data;
 }
 
 export async function attachColorToForecast(forecast_id, color_id) {
-  try {
-    const response = await fetch(`${API_URL}/forecast_colors`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ forecast_id, color_id }),
-    });
-    const data = await response.json();
-    return data;
-  } catch (error) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("forecast_colors")
+    .insert([
+      {
+        user_id: userId,
+        forecast_id,
+        color_id
+      }
+    ])
+    .select()
+    .single();
+
+  if (error) {
     console.error("Attach color to forecast error:", error);
     return null;
   }
+
+  return data;
 }
 
 export async function getColorsForForecast(forecast_id) {
-  try {
-    const response = await fetch(`${API_URL}/forecast_colors/${forecast_id}`);
-    const data = await response.json();
-    return data;
-  } catch (error) {
+  const { data, error } = await supabase
+    .from("forecast_colors")
+    .select("colors(*)")
+    .eq("forecast_id", forecast_id);
+
+  if (error) {
     console.error("Get colors for forecast error:", error);
     return [];
   }
+
+  return (data || [])
+    .map((item) => item.colors)
+    .filter(Boolean);
 }
 
 export async function createColorStory({
@@ -186,40 +264,63 @@ export async function createColorStory({
   design_application,
   fabric_suggestions
 }) {
-  try {
-    const response = await fetch(`${API_URL}/color_stories`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ color_id, forecast_id, narrative, design_application, fabric_suggestions }),
-    });
-    const data = await response.json();
-    return data;
-  } catch (error) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("color_stories")
+    .insert([
+      {
+        user_id: userId,
+        color_id,
+        forecast_id,
+        narrative,
+        design_application,
+        fabric_suggestions
+      }
+    ])
+    .select()
+    .single();
+
+  if (error) {
     console.error("Create color story error:", error);
     return null;
   }
+
+  return data;
 }
 
 export async function getColorStoriesByColor(color_id) {
-  try {
-    const response = await fetch(`${API_URL}/color_stories/color/${color_id}`);
-    const data = await response.json();
-    return data;
-  } catch (error) {
+  const { data, error } = await supabase
+    .from("color_stories")
+    .select("*")
+    .eq("color_id", color_id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
     console.error("Get color stories by color error:", error);
     return [];
   }
+
+  return data;
 }
 
 export async function getColorStoryById(id) {
-  try {
-    const response = await fetch(`${API_URL}/color_stories/${id}`);
-    const data = await response.json();
-    return data;
-  } catch (error) {
+  const { data, error } = await supabase
+    .from("color_stories")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
     console.error("Get color story by id error:", error);
     return null;
   }
+
+  return data;
 }
 
 export async function createCollection({
@@ -230,65 +331,80 @@ export async function createCollection({
   description,
   palette
 }) {
-  try {
-    const response = await fetch(`${API_URL}/collections`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ designer, brand, season, year, description, palette }),
-    });
-    const data = await response.json();
-    return data;
-  } catch (error) {
+  const userId = await getAuthenticatedUserId();
+
+  if (!userId) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("fashion_collections")
+    .insert([
+      {
+        user_id: userId,
+        designer,
+        brand,
+        season,
+        year,
+        description,
+        palette
+      }
+    ])
+    .select()
+    .single();
+
+  if (error) {
     console.error("Create collection error:", error);
     return null;
   }
+
+  return data;
 }
 
 export async function getCollections() {
-  try {
-    const response = await fetch(`${API_URL}/collections`);
-    const data = await response.json();
-    return data;
-  } catch (error) {
+  const { data, error } = await supabase
+    .from("fashion_collections")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
     console.error("Get collections error:", error);
     return [];
   }
+
+  return data;
 }
 
 export async function getCollectionsByColor(hex) {
-  try {
-    const response = await fetch(`${API_URL}/collections`);
-    const data = await response.json();
-    const normalizedHex = hex.toUpperCase();
-    
-    const matches = (data || []).filter((collection) => {
-      let palette = collection.palette;
+  const { data, error } = await supabase
+    .from("fashion_collections")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-      if (typeof palette === "string") {
-        try {
-          palette = JSON.parse(palette);
-        } catch (parseError) {
-          console.error("Parse collection palette error:", parseError);
-          return false;
-        }
-      }
-
-      if (!Array.isArray(palette)) {
-        return false;
-      }
-
-      return palette.some((value) => String(value).toUpperCase() === normalizedHex);
-    });
-
-    console.log("getCollectionsByColor result", {
-      hex: normalizedHex,
-      totalCollections: (data || []).length,
-      matches
-    });
-
-    return matches;
-  } catch (error) {
+  if (error) {
     console.error("Get collections by color error:", error);
     return [];
   }
+
+  const normalizedHex = hex.toUpperCase();
+  const matches = (data || []).filter((collection) => {
+    let palette = collection.palette;
+
+    if (typeof palette === "string") {
+      try {
+        palette = JSON.parse(palette);
+      } catch (parseError) {
+        console.error("Parse collection palette error:", parseError);
+        return false;
+      }
+    }
+
+    if (!Array.isArray(palette)) {
+      return false;
+    }
+
+    return palette.some((value) => String(value).toUpperCase() === normalizedHex);
+  });
+
+  return matches;
 }

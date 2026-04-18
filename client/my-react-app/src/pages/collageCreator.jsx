@@ -1,6 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Stage, Layer, Rect } from 'react-konva';
 import CollageBox from '../components/collageBox.jsx';
+import { fetchColors } from './features/colorForecasting/data/colorService';
+import { fetchColorStoriesByColor } from './features/colorForecasting/data/colorStoryService';
+import { supabase } from '../lib/supabaseClient';
 import './collageCreator.css';
 
 const GRID_SIZE = 20;
@@ -11,12 +15,113 @@ export default function CollagePage() {
   const [rects, setRects] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [bgColor, setBgColor] = useState('#ffffff');
+  const [savedColors, setSavedColors] = useState([]);
+  const [activeLibraryColorId, setActiveLibraryColorId] = useState(null);
+  const [activeLibraryStory, setActiveLibraryStory] = useState(null);
+  const [isLoadingStory, setIsLoadingStory] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [stageSize, setStageSize] = useState({ width: BASE_WIDTH, height: BASE_HEIGHT, scale: 1 });
-  
+
   const stageRef = useRef();
   const containerRef = useRef();
 
-  // Handle Responsive Scaling
+  const updateRectById = (id, updater) => {
+    setRects((prev) => prev.map((item) => (
+      item.id === id
+        ? { ...item, ...(typeof updater === 'function' ? updater(item) : updater) }
+        : item
+    )));
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function syncSessionState() {
+      const {
+        data: { session },
+        error
+      } = await supabase.auth.getSession();
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (error) {
+        console.error('Unable to load session for collage editor:', error);
+        setIsAuthenticated(false);
+        return;
+      }
+
+      setIsAuthenticated(Boolean(session));
+    }
+
+    void syncSessionState();
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) {
+        return;
+      }
+
+      setIsAuthenticated(Boolean(session));
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    async function loadSavedColors() {
+      if (!isAuthenticated) {
+        setSavedColors([]);
+        setActiveLibraryColorId(null);
+        setActiveLibraryStory(null);
+        return;
+      }
+
+      try {
+        const data = await fetchColors();
+        setSavedColors(data || []);
+      } catch (error) {
+        console.error('Unable to load saved colors:', error);
+        setSavedColors([]);
+      }
+    }
+
+    loadSavedColors();
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    async function loadActiveStory() {
+      if (!isAuthenticated) {
+        setActiveLibraryStory(null);
+        return;
+      }
+
+      if (!activeLibraryColorId) {
+        setActiveLibraryStory(null);
+        return;
+      }
+
+      setIsLoadingStory(true);
+
+      try {
+        const stories = await fetchColorStoriesByColor(activeLibraryColorId);
+        setActiveLibraryStory((stories || [])[0] || null);
+      } catch (error) {
+        console.error('Unable to load color story:', error);
+        setActiveLibraryStory(null);
+      } finally {
+        setIsLoadingStory(false);
+      }
+    }
+
+    loadActiveStory();
+  }, [activeLibraryColorId, isAuthenticated]);
+
   useEffect(() => {
     const handleResize = () => {
       if (containerRef.current) {
@@ -38,12 +143,10 @@ export default function CollagePage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Handle Delete
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Check if the user is currently typing in an input or text area
       const isTyping = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT';
-      
+
       if (!isTyping && (e.key === 'Backspace' || e.key === 'Delete') && selectedId) {
         setRects(prev => prev.filter(r => r.id !== selectedId));
         setSelectedId(null);
@@ -55,15 +158,63 @@ export default function CollagePage() {
 
   const addBox = () => {
     const id = `rect${Date.now()}`;
-    setRects([...rects, { id, x: 40, y: 40, width: 140, height: 140, fill: '#000000', type: 'rect' }]);
+    setRects([...rects, { id, x: 40, y: 40, width: 250, height: 60, fill: '#000000', type: 'rect' }]);
     setSelectedId(id);
   };
 
   const addText = () => {
     const id = `text${Date.now()}`;
-    setRects([...rects, { 
-      id, x: 100, y: 100, text: 'NEW TEXT', fontSize: 40, 
-      fontFamily: 'Arial', fill: '#000000', type: 'text' 
+    setRects([...rects, {
+      id, x: 100, y: 100, text: 'NEW TEXT', fontSize: 40,
+      fontFamily: 'Arial', fill: '#000000', type: 'text'
+    }]);
+    setSelectedId(id);
+  };
+
+  const selectedItem = rects.find(r => r.id === selectedId);
+
+  const addStoryTextToCanvas = (text) => {
+    if (!text || !text.trim()) {
+      return;
+    }
+
+    if (selectedItem?.type === 'text') {
+      updateRectById(selectedId, { text });
+      return;
+    }
+
+    const id = `text${Date.now()}`;
+    setRects((prev) => [...prev, {
+      id,
+      x: 80,
+      y: 80,
+      text,
+      fontSize: 28,
+      width: 320,
+      fontFamily: 'Arial',
+      fill: '#111111',
+      type: 'text'
+    }]);
+    setSelectedId(id);
+  };
+
+  const addColorSwatchToCanvas = (color) => {
+    if (!color) {
+      return;
+    }
+
+    const id = `swatch${Date.now()}`;
+    setRects((prev) => [...prev, {
+      id,
+      x: 80,
+      y: 80,
+      width: 180,
+      height: 260,
+      fill: color.hex,
+      hex: color.hex,
+      name: color.name,
+      season: color.season || '',
+      type: 'swatchCard'
     }]);
     setSelectedId(id);
   };
@@ -89,7 +240,7 @@ export default function CollagePage() {
       };
       reader.readAsDataURL(file);
     });
-    e.target.value = null; 
+    e.target.value = null;
   };
 
   const moveLayer = (direction) => {
@@ -115,13 +266,32 @@ export default function CollagePage() {
     });
   };
 
-  const selectedItem = rects.find(r => r.id === selectedId);
+  const applySavedColor = (color) => {
+    const { hex } = color;
+
+    if (!selectedId) {
+      setBgColor(hex);
+      return;
+    }
+
+    setRects((prev) =>
+      prev.map((item) => (
+        item.id === selectedId && !item.imageSrc
+          ? item.type === 'swatchCard'
+            ? { ...item, fill: hex, hex: color.hex, name: color.name, season: color.season || '' }
+            : { ...item, fill: hex }
+          : item
+      ))
+    );
+  };
+
+  const activeLibraryColor = savedColors.find((color) => color.id === activeLibraryColorId);
 
   return (
     <div className="collage-app">
       <aside className="sidebar">
         <h2 className="sidebar-title">Editor</h2>
-        
+
         <div className="tool-section">
           <label>Elements</label>
           <button className="secondary-btn" onClick={addBox}>+ Add Block</button>
@@ -137,9 +307,106 @@ export default function CollagePage() {
         <div className="tool-section">
           <label>Background</label>
           <div className="color-picker-wrapper">
-             <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} />
-             <span>{bgColor.toUpperCase()}</span>
+            <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} />
+            <span>{bgColor.toUpperCase()}</span>
           </div>
+        </div>
+
+        <div className="tool-section">
+          <label>Color Library</label>
+          {!isAuthenticated ? (
+            <Link to="/signin" className="saved-colors-empty-link">
+              <span className="saved-colors-empty">
+                Sign in to use your Color Forecasting library here.
+              </span>
+            </Link>
+          ) : savedColors.length ? (
+            <div className="saved-colors-list">
+              {savedColors.map((color) => (
+                <button
+                  key={color.id}
+                  type="button"
+                  className={`saved-color-card${activeLibraryColorId === color.id ? ' is-active' : ''}`}
+                  onClick={() => {
+                    setActiveLibraryColorId(color.id);
+                    applySavedColor(color);
+                  }}
+                  title={
+                    selectedId
+                      ? `Apply ${color.name} to selected item`
+                      : `Apply ${color.name} to background`
+                  }
+                >
+                  <span
+                    className="saved-color-swatch"
+                    style={{ backgroundColor: color.hex }}
+                    aria-hidden="true"
+                  />
+                  <span className="saved-color-meta">
+                    <span className="saved-color-name">{color.name}</span>
+                    <span className="saved-color-hex">{color.hex}</span>
+                    <span className="saved-color-season">
+                      {color.season || 'Uncategorized'}
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <Link to="/color" className="saved-colors-empty-link">
+              <span className="saved-colors-empty">
+                Add colors in Color Forecasting to use them here.
+              </span>
+            </Link>
+          )}
+
+          {activeLibraryColor && (
+            <div style={{ marginTop: "20px", display: "grid", gap: "14px" }}>
+              <p style={{ margin: 0, fontSize: "12px", letterSpacing: "0.14em", textTransform: "uppercase", color: "#777" }}>
+                {activeLibraryColor.name} Story
+              </p>
+
+              {isLoadingStory ? (
+                <p style={{ margin: 0, color: "#777" }}>Loading story...</p>
+              ) : activeLibraryStory ? (
+                <>
+                  <div>
+                    <strong>Narrative</strong>
+                    <p style={{ margin: "6px 0 0", lineHeight: 1.5 }}>{activeLibraryStory.narrative}</p>
+                  </div>
+
+                  <div>
+                    <strong>Design Application</strong>
+                    <p style={{ margin: "6px 0 0", lineHeight: 1.5 }}>{activeLibraryStory.design_application}</p>
+                  </div>
+
+                  <div>
+                    <strong>Fabric Suggestions</strong>
+                    <p style={{ margin: "6px 0 0", lineHeight: 1.5 }}>{activeLibraryStory.fabric_suggestions}</p>
+                  </div>
+
+                  <div style={{ display: "grid", gap: "8px" }}>
+                    <button type="button" className="secondary-btn" onClick={() => addColorSwatchToCanvas(activeLibraryColor)}>
+                      Add Color Swatch
+                    </button>
+                    <button type="button" className="secondary-btn" onClick={() => addStoryTextToCanvas(activeLibraryStory.narrative)}>
+                      Add Narrative
+                    </button>
+                    <button type="button" className="secondary-btn" onClick={() => addStoryTextToCanvas(activeLibraryStory.design_application)}>
+                      Add Design Notes
+                    </button>
+                    <button type="button" className="secondary-btn" onClick={() => addStoryTextToCanvas(activeLibraryStory.fabric_suggestions)}>
+                      Add Fabric Notes
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p style={{ margin: 0, color: "#777" }}>
+                  No story yet for this color.
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {selectedId && (
@@ -153,18 +420,18 @@ export default function CollagePage() {
             {selectedItem?.type === 'text' && (
               <div className="text-edit-group">
                 <label>Content</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="text-input"
                   value={selectedItem.text}
-                  onChange={(e) => setRects(rects.map(r => r.id === selectedId ? {...r, text: e.target.value} : r))}
+                  onChange={(e) => updateRectById(selectedId, { text: e.target.value })}
                 />
                 <div>
                   <label>Font</label>
-                  <select 
+                  <select
                     className="font-select"
                     value={selectedItem.fontFamily}
-                    onChange={(e) => setRects(rects.map(r => r.id === selectedId ? {...r, fontFamily: e.target.value} : r))}
+                    onChange={(e) => updateRectById(selectedId, { fontFamily: e.target.value })}
                   >
                     <option value="Arial">Arial</option>
                     <option value="Courier New">Courier</option>
@@ -176,14 +443,14 @@ export default function CollagePage() {
             )}
 
             {!selectedItem?.imageSrc && (
-               <div className="color-picker-wrapper">
-                 <input 
-                   type="color" 
-                   value={selectedItem?.fill || '#000000'}
-                   onChange={(e) => setRects(rects.map(r => r.id === selectedId ? {...r, fill: e.target.value} : r))} 
-                 />
-                 <span>Edit Color</span>
-               </div>
+              <div className="color-picker-wrapper">
+                <input
+                  type="color"
+                  value={selectedItem?.fill || '#000000'}
+                  onChange={(e) => updateRectById(selectedId, { fill: e.target.value })}
+                />
+                <span>Edit Color</span>
+              </div>
             )}
             <button className="delete-btn" onClick={() => { setRects(rects.filter(r => r.id !== selectedId)); setSelectedId(null); }}>Delete</button>
           </div>
@@ -194,14 +461,20 @@ export default function CollagePage() {
 
       <main className="canvas-area" ref={containerRef}>
         <div className="canvas-wrapper">
-          <Stage 
-            width={stageSize.width} height={stageSize.height} 
+          <Stage
+            width={stageSize.width} height={stageSize.height}
             scaleX={stageSize.scale} scaleY={stageSize.scale}
             ref={stageRef} className="canvas-stage"
             onMouseDown={(e) => e.target === e.target.getStage() && setSelectedId(null)}
           >
             <Layer>
-              <Rect width={BASE_WIDTH} height={BASE_HEIGHT} fill={bgColor} />
+              <Rect
+                width={BASE_WIDTH}
+                height={BASE_HEIGHT}
+                fill={bgColor}
+                onMouseDown={() => setSelectedId(null)}
+                onTap={() => setSelectedId(null)}
+              />
               {rects.map((rect, i) => (
                 <CollageBox
                   key={rect.id} shapeProps={rect}

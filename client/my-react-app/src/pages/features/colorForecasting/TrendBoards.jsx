@@ -138,7 +138,7 @@ export default function TrendBoards() {
       <section style={{ marginBottom: "72px" }}>
         <button
           type="button"
-          onClick={() => navigate("/forecasting")}
+          onClick={() => navigate("/color")}
           style={{
             marginBottom: "28px",
             padding: "10px 18px",

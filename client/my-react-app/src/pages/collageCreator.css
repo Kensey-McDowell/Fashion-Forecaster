@@ -57,15 +57,14 @@ body {
   text-transform: uppercase;
 }
 
-/* The Canvas Wrapper */
 .canvas-stage {
   background-color: var(--pantone-white);
   border: 2px solid var(--pantone-black);
-  box-shadow: 10px 10px 0px var(--pantone-gray); 
+  box-shadow: 10px 10px 0px var(--pantone-gray);
 }
 
 .save-btn {
-  margin-left: auto; 
+  margin-left: auto;
   background-color: transparent !important;
   color: var(--pantone-black) !important;
   border: 2px solid var(--pantone-black) !important;
@@ -78,7 +77,6 @@ body {
   overflow: hidden;
 }
 
-/* Sidebar Styling */
 .sidebar {
   width: 280px;
   background-color: var(--pantone-white);
@@ -101,6 +99,156 @@ body {
   gap: 10px;
 }
 
+.saved-colors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.saved-color-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #ffffff;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.saved-color-card:hover {
+  background: #f6f4ef;
+  border-color: var(--pantone-black);
+}
+
+.saved-color-card.is-active {
+  border-color: var(--pantone-black);
+  background: #f6f4ef;
+}
+
+.saved-color-swatch {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+}
+
+.saved-color-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.saved-color-name,
+.saved-color-hex,
+.saved-color-season {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.saved-color-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--pantone-black);
+}
+
+.saved-color-hex,
+.saved-color-season,
+.saved-colors-empty {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: #666666;
+}
+
+.saved-colors-empty {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--pantone-black);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.saved-colors-empty-link {
+  display: block;
+  padding: 16px 18px;
+  border: 1.5px solid var(--pantone-black);
+  background: #ffffff;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.saved-colors-empty-link:hover {
+  background: #f6f4ef;
+}
+
+.story-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #faf8f5;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.story-panel-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--pantone-black);
+}
+
+.story-panel-copy strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #666666;
+}
+
+.story-panel-copy p,
+.story-panel-empty {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #222222;
+}
+
+.story-panel-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.story-action-btn {
+  border: 1px solid var(--pantone-black);
+  background: #ffffff;
+  color: var(--pantone-black);
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.story-action-btn:hover {
+  background: #f6f4ef;
+}
+
 .tool-section label {
   font-size: 11px;
   font-weight: 800;
@@ -109,7 +257,10 @@ body {
   color: #888;
 }
 
-.secondary-btn, .upload-label, .download-btn, .delete-btn {
+.secondary-btn,
+.upload-label,
+.download-btn,
+.delete-btn {
   background: var(--pantone-black);
   color: var(--pantone-white);
   border: none;
@@ -135,12 +286,11 @@ body {
 }
 
 .download-btn {
-  margin-top: auto; 
+  margin-top: auto;
   background: var(--pantone-black);
   padding: 15px;
 }
 
-/* Color Picker UI */
 .color-picker-wrapper {
   display: flex;
   align-items: center;
@@ -157,7 +307,6 @@ body {
   background: none;
 }
 
-/* Canvas Positioning */
 .canvas-area {
   flex-grow: 1;
   display: flex;
@@ -168,6 +317,6 @@ body {
 }
 
 .canvas-wrapper {
-  box-shadow: 15px 15px 0px rgba(0,0,0,0.05);
+  box-shadow: 15px 15px 0px rgba(0, 0, 0, 0.05);
   border: 1px solid var(--pantone-black);
 }

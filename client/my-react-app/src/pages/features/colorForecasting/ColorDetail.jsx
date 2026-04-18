@@ -7,7 +7,9 @@ import {
 } from "./data/colorService";
 import {
   createColorStory,
-  fetchColorStoriesByColor
+  deleteColorStory,
+  fetchColorStoriesByColor,
+  updateColorStory
 } from "./data/colorStoryService";
 import {
   addColorToBoard,
@@ -32,6 +34,16 @@ export default function ColorDetail({ colorId, onBack }) {
   const [selectedBoardId, setSelectedBoardId] = useState("");
   const [storyError, setStoryError] = useState("");
   const [isSavingStory, setIsSavingStory] = useState(false);
+  const [editingStoryId, setEditingStoryId] = useState(null);
+  const [editingNarrative, setEditingNarrative] = useState("");
+  const [editingDesignApplication, setEditingDesignApplication] = useState("");
+  const [editingFabricSuggestions, setEditingFabricSuggestions] = useState("");
+  const [editingStoryError, setEditingStoryError] = useState("");
+  const [isUpdatingStory, setIsUpdatingStory] = useState(false);
+  const [openStoryMenuId, setOpenStoryMenuId] = useState(null);
+  const [boardMessage, setBoardMessage] = useState("");
+  const [boardError, setBoardError] = useState("");
+  const [isAddingToBoard, setIsAddingToBoard] = useState(false);
 
   useEffect(() => {
     async function loadTrendBoards() {
@@ -83,12 +95,14 @@ export default function ColorDetail({ colorId, onBack }) {
         setRelatedColors(findClosestColors(currentColor.hex, allColors || [], 4));
         setCollections(matchingCollections || []);
         setStories(colorStories || []);
+      } catch (error) {
+        console.error("Unable to load color detail:", error);
       } finally {
         setIsLoading(false);
       }
     }
 
-    loadColorDetail();
+    void loadColorDetail();
   }, [activeColorId]);
 
   async function handleSubmit(event) {
@@ -128,20 +142,118 @@ export default function ColorDetail({ colorId, onBack }) {
   }
 
   async function handleAddToTrendBoard() {
+    setBoardMessage("");
+    setBoardError("");
+
     if (!selectedBoardId || !color) {
+      setBoardError("Select a trend board first.");
       return;
     }
 
-    const entry = await addColorToBoard(selectedBoardId, color.id);
+    setIsAddingToBoard(true);
 
-    if (!entry) {
+    try {
+      const result = await addColorToBoard(selectedBoardId, color.id);
+
+      if (!result?.ok) {
+        setBoardError(
+          result?.reason === "duplicate"
+            ? "This color is already on the board."
+            : "This color could not be added right now."
+        );
+        return;
+      }
+
+      const selectedBoard = trendBoards.find((board) => board.id === selectedBoardId);
+      setBoardMessage(
+        selectedBoard
+          ? `${color.name} added to ${selectedBoard.name}.`
+          : `${color.name} added to the selected board.`
+      );
+    } catch (error) {
+      console.error("Unable to add color to trend board:", error);
+      setBoardError("Unable to add this color right now.");
+    } finally {
+      setIsAddingToBoard(false);
+    }
+  }
+
+  function handleStartStoryEdit(story) {
+    setOpenStoryMenuId(null);
+    setEditingStoryId(story.id);
+    setEditingNarrative(story.narrative || "");
+    setEditingDesignApplication(story.design_application || "");
+    setEditingFabricSuggestions(story.fabric_suggestions || "");
+    setEditingStoryError("");
+  }
+
+  function handleCancelStoryEdit() {
+    setEditingStoryId(null);
+    setEditingNarrative("");
+    setEditingDesignApplication("");
+    setEditingFabricSuggestions("");
+    setEditingStoryError("");
+    setIsUpdatingStory(false);
+  }
+
+  async function handleSaveStoryEdit(storyId) {
+    setEditingStoryError("");
+    setIsUpdatingStory(true);
+
+    try {
+      const updatedStory = await updateColorStory(storyId, {
+        narrative: editingNarrative,
+        design_application: editingDesignApplication,
+        fabric_suggestions: editingFabricSuggestions
+      });
+
+      if (!updatedStory) {
+        setEditingStoryError("Unable to update story.");
+        return;
+      }
+
+      const colorStories = await fetchColorStoriesByColor(color.id);
+      setStories(colorStories || []);
+      handleCancelStoryEdit();
+    } catch (error) {
+      console.error("Unable to update color story:", error);
+      setEditingStoryError("Unable to update story.");
+    } finally {
+      setIsUpdatingStory(false);
+    }
+  }
+
+  async function handleDeleteStory(storyId) {
+    if (!color) {
       return;
     }
 
-    console.log("Added color to trend board", {
-      boardId: selectedBoardId,
-      colorId: color.id
-    });
+    const shouldDelete = window.confirm("Delete this color story?");
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    setOpenStoryMenuId(null);
+
+    if (editingStoryId === storyId) {
+      handleCancelStoryEdit();
+    }
+
+    try {
+      const didDelete = await deleteColorStory(storyId);
+
+      if (!didDelete) {
+        setEditingStoryError("Unable to delete story.");
+        return;
+      }
+
+      const colorStories = await fetchColorStoriesByColor(color.id);
+      setStories(colorStories || []);
+    } catch (error) {
+      console.error("Unable to delete color story:", error);
+      setEditingStoryError("Unable to delete story.");
+    }
   }
 
   function handleBackToColors() {
@@ -254,19 +366,23 @@ export default function ColorDetail({ colorId, onBack }) {
               <button
                 type="button"
                 onClick={handleAddToTrendBoard}
+                disabled={isAddingToBoard || trendBoards.length === 0}
                 style={{
                   padding: "12px 18px",
                   border: "1px solid #000",
-                  background: "#000",
+                  background: isAddingToBoard || trendBoards.length === 0 ? "#d9d2c9" : "#000",
                   color: "#fff",
-                  cursor: "pointer"
+                  cursor: isAddingToBoard || trendBoards.length === 0 ? "default" : "pointer"
                 }}
               >
-                Add to Trend Board
+                {isAddingToBoard ? "Adding..." : "Add to Trend Board"}
               </button>
               <Link
-                to="/trend-boards"
-                state={{ fromColorId: color.id }}
+                to={selectedBoardId ? `/boards/${selectedBoardId}` : "/trend-boards"}
+                state={{
+                  fromColorId: color.id,
+                  focusColorId: color.id
+                }}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -279,11 +395,25 @@ export default function ColorDetail({ colorId, onBack }) {
                 View Boards
               </Link>
             </div>
+            {trendBoards.length === 0 && (
+              <p style={{ margin: "14px 0 0", color: "#777" }}>
+                Create a trend board first to start building a palette.
+              </p>
+            )}
+            {boardMessage && (
+              <p style={{ margin: "14px 0 0", color: "#2f5d50", fontWeight: 500 }}>
+                {boardMessage}
+              </p>
+            )}
+            {boardError && (
+              <p style={{ margin: "14px 0 0", color: "#8a3b2e", fontWeight: 500 }}>
+                {boardError}
+              </p>
+            )}
           </div>
         </div>
       </section>
 
-      {/* PANTONE GRID */}
       <section style={{ marginBottom: "100px" }}>
         <h2 style={{ marginBottom: "40px", fontSize: "28px" }}>
           Pantone Validation
@@ -374,7 +504,7 @@ export default function ColorDetail({ colorId, onBack }) {
           ))}
         </div>
       </section>
-      {/* HISTORICAL COLLECTIONS */}
+
       <section style={{ marginBottom: "100px" }}>
         <h2 style={{ marginBottom: "40px", fontSize: "28px" }}>
           Historical Collections
@@ -422,7 +552,6 @@ export default function ColorDetail({ colorId, onBack }) {
         </div>
       </section>
 
-      {/* STORIES */}
       <section style={{ marginBottom: "100px" }}>
         <h2 style={{ marginBottom: "40px", fontSize: "28px" }}>
           Color Stories
@@ -437,34 +566,167 @@ export default function ColorDetail({ colorId, onBack }) {
             <div
               key={story.id}
               style={{
+                position: "relative",
                 padding: "40px",
                 border: "1px solid #e5dfd7",
                 background: "#ffffff"
               }}
             >
-              <p style={{ margin: "0 0 24px", lineHeight: 1.8 }}>
-                {story.narrative}
-              </p>
-
-              <div style={{ marginBottom: "18px" }}>
-                <strong>Design Application</strong>
-                <p style={{ margin: "8px 0 0", lineHeight: 1.6 }}>
-                  {story.design_application}
-                </p>
+              <div style={{ position: "absolute", top: "18px", right: "18px" }}>
+                <button
+                  type="button"
+                  onClick={() => setOpenStoryMenuId((currentId) => (
+                    currentId === story.id ? null : story.id
+                  ))}
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    border: "none",
+                    borderRadius: "999px",
+                    background: "#f6f4ef",
+                    cursor: "pointer",
+                    fontSize: "20px",
+                    lineHeight: 1
+                  }}
+                >
+                  ⋯
+                </button>
+                {openStoryMenuId === story.id && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "40px",
+                      right: 0,
+                      minWidth: "160px",
+                      border: "1px solid #ddd5ca",
+                      background: "#fff",
+                      boxShadow: "0 12px 24px rgba(17, 17, 17, 0.08)"
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleStartStoryEdit(story)}
+                      style={{
+                        width: "100%",
+                        padding: "12px 14px",
+                        border: "none",
+                        background: "transparent",
+                        textAlign: "left",
+                        cursor: "pointer"
+                      }}
+                    >
+                      Edit Story
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteStory(story.id)}
+                      style={{
+                        width: "100%",
+                        padding: "12px 14px",
+                        border: "none",
+                        background: "transparent",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        color: "#b42318"
+                      }}
+                    >
+                      Delete Story
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <div>
-                <strong>Fabric Suggestions</strong>
-                <p style={{ margin: "8px 0 0", lineHeight: 1.6 }}>
-                  {story.fabric_suggestions}
-                </p>
-              </div>
+              {editingStoryId === story.id ? (
+                <div style={{ display: "grid", gap: "18px" }}>
+                  <textarea
+                    value={editingNarrative}
+                    onChange={(event) => setEditingNarrative(event.target.value)}
+                    rows={6}
+                    style={{ padding: "14px", marginTop: "8px" }}
+                  />
+
+                  <div>
+                    <strong>Design Application</strong>
+                    <textarea
+                      value={editingDesignApplication}
+                      onChange={(event) => setEditingDesignApplication(event.target.value)}
+                      rows={4}
+                      style={{ width: "100%", padding: "14px", marginTop: "8px" }}
+                    />
+                  </div>
+
+                  <div>
+                    <strong>Fabric Suggestions</strong>
+                    <textarea
+                      value={editingFabricSuggestions}
+                      onChange={(event) => setEditingFabricSuggestions(event.target.value)}
+                      rows={4}
+                      style={{ width: "100%", padding: "14px", marginTop: "8px" }}
+                    />
+                  </div>
+
+                  {editingStoryError && (
+                    <p style={{ margin: 0, color: "#b42318" }}>
+                      {editingStoryError}
+                    </p>
+                  )}
+
+                  <div style={{ display: "flex", gap: "12px" }}>
+                    <button
+                      type="button"
+                      onClick={() => handleSaveStoryEdit(story.id)}
+                      disabled={isUpdatingStory}
+                      style={{
+                        padding: "12px 18px",
+                        border: "1px solid #000",
+                        background: isUpdatingStory ? "#444" : "#000",
+                        color: "#fff",
+                        cursor: isUpdatingStory ? "default" : "pointer"
+                      }}
+                    >
+                      {isUpdatingStory ? "Saving..." : "Save Story"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelStoryEdit}
+                      disabled={isUpdatingStory}
+                      style={{
+                        padding: "12px 18px",
+                        border: "1px solid #ccc",
+                        background: "#fff",
+                        cursor: isUpdatingStory ? "default" : "pointer"
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p style={{ margin: "0 0 24px", lineHeight: 1.8 }}>
+                    {story.narrative}
+                  </p>
+
+                  <div style={{ marginBottom: "18px" }}>
+                    <strong>Design Application</strong>
+                    <p style={{ margin: "8px 0 0", lineHeight: 1.6 }}>
+                      {story.design_application}
+                    </p>
+                  </div>
+
+                  <div>
+                    <strong>Fabric Suggestions</strong>
+                    <p style={{ margin: "8px 0 0", lineHeight: 1.6 }}>
+                      {story.fabric_suggestions}
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>
       </section>
 
-      {/* FORM */}
       <section style={{ marginTop: "120px" }}>
         <h2 style={{ marginBottom: "40px", fontSize: "28px" }}>
           Add Color Story

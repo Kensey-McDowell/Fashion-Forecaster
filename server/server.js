@@ -8,17 +8,6 @@ import fs from "fs";
 import path from "path";
 import csv from "csv-parser";
 
-console.log("Supabase URL:", process.env.VITE_SUPABASE_URL);
-
-const supabaseUrl = process.env.VITE_SUPABASE_URL; 
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY; 
-
-if (!supabaseUrl || !supabaseKey) {
-  console.error("Error: Supabase environment variables are missing!");
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey);
-
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,6 +15,118 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+const googleApiKey = process.env.GOOGLE_API_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error("Error: VITE_SUPABASE_URL and/or VITE_SUPABASE_ANON_KEY are missing.");
+}
+
+if (!googleApiKey) {
+  console.error("Error: GOOGLE_API_KEY is missing.");
+}
+
+function createSupabaseServerClient() {
+  return createClient(supabaseUrl, supabaseKey);
+}
+
+const supabase = createSupabaseServerClient();
+
+function normalizeRequestedRole(value) {
+  return value === "professor" ? "professor" : "student";
+}
+
+function buildProfilePayload(user) {
+  const fallbackName = user.email?.split("@")[0] || "Fashion Student";
+
+  return {
+    id: user.id,
+    name: user.user_metadata?.full_name || user.user_metadata?.name || fallbackName,
+    email: user.email,
+    role: normalizeRequestedRole(user.user_metadata?.requested_role)
+  };
+}
+
+function serializeUser(user) {
+  if (!user?.id) {
+    return null;
+  }
+
+  return {
+    id: user.id,
+    email: user.email,
+    user_metadata: {
+      full_name: user.user_metadata?.full_name || user.user_metadata?.name || "",
+      requested_role: normalizeRequestedRole(user.user_metadata?.requested_role)
+    }
+  };
+}
+
+async function ensureProfile(user) {
+  if (!user?.id) {
+    return null;
+  }
+
+  const { data: existingProfile, error: fetchError } = await supabase
+    .from("profiles")
+    .select("id, name, email, role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (fetchError) {
+    console.error("Ensure profile fetch error:", fetchError);
+    return null;
+  }
+
+  if (existingProfile) {
+    return existingProfile;
+  }
+
+  const payload = buildProfilePayload(user);
+  const { data: insertedProfile, error: insertError } = await supabase
+    .from("profiles")
+    .insert([payload])
+    .select("id, name, email, role")
+    .single();
+
+  if (insertError) {
+    console.error("Ensure profile insert error:", insertError);
+    return null;
+  }
+
+  return insertedProfile;
+}
+
+async function fetchProfileById(userId) {
+  if (!userId) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, name, email, role")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Fetch profile by id error:", error);
+    return null;
+  }
+
+  return data;
+}
+
+function getRequestUserId(req) {
+  return String(
+    req.body?.user_id ||
+    req.body?.userId ||
+    req.query?.user_id ||
+    req.query?.userId ||
+    ""
+  ).trim();
+}
 
 // 🔹 DATA OBJECT
 let fashionStats = {
@@ -171,35 +272,160 @@ app.post("/chat", async (req, res) => {
   }
 });
 
+app.post("/api/auth/signin", async (req, res) => {
+  const email = String(req.body?.email || "").trim();
+  const password = String(req.body?.password || "");
+
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password are required." });
+  }
+
+  const authClient = createSupabaseServerClient();
+  const { data, error } = await authClient.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    return res.status(401).json({ error: error.message });
+  }
+
+  const user = data.user || data.session?.user;
+
+  if (!user?.id) {
+    return res.status(401).json({ error: "Authentication failed." });
+  }
+
+  const profile = await ensureProfile(user);
+
+  res.json({
+    user: serializeUser(user),
+    profile
+  });
+});
+
+app.post("/api/auth/signup", async (req, res) => {
+  const fullName = String(req.body?.fullName || "").trim();
+  const email = String(req.body?.email || "").trim();
+  const password = String(req.body?.password || "");
+  const role = normalizeRequestedRole(req.body?.role);
+
+  if (!fullName || !email || !password) {
+    return res.status(400).json({ error: "Full name, email, and password are required." });
+  }
+
+  const authClient = createSupabaseServerClient();
+  const { data, error } = await authClient.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: fullName,
+        requested_role: role
+      }
+    }
+  });
+
+  if (error) {
+    return res.status(400).json({ error: error.message });
+  }
+
+  const user = data.user || data.session?.user || null;
+  const profile = user?.id ? await ensureProfile(user) : null;
+
+  res.json({
+    user: serializeUser(user),
+    profile,
+    requiresConfirmation: !data.session
+  });
+});
+
+app.post("/api/profile/bootstrap", async (req, res) => {
+  const user = req.body?.user || req.body;
+
+  if (!user?.id) {
+    return res.status(400).json({ error: "A user payload with an id is required." });
+  }
+
+  const normalizedUser = {
+    id: user.id,
+    email: user.email,
+    user_metadata: {
+      full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.full_name || user.name || "",
+      requested_role: user.user_metadata?.requested_role || user.requested_role || user.role
+    }
+  };
+
+  const profile = await ensureProfile(normalizedUser);
+
+  if (!profile) {
+    return res.status(500).json({ error: "Unable to bootstrap profile." });
+  }
+
+  res.json({ profile });
+});
+
+app.get("/api/profile/:userId", async (req, res) => {
+  const profile = await fetchProfileById(req.params.userId);
+
+  if (!profile) {
+    return res.status(404).json({ error: "Profile not found." });
+  }
+
+  res.json(profile);
+});
+
 // COLORS 
 app.get("/api/colors", async (req, res) => {
-  const { data, error } = await supabase.from("colors").select("*").order("created_at", { ascending: true });
+  const userId = getRequestUserId(req);
+  let query = supabase.from("colors").select("*").order("created_at", { ascending: true });
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+  const { data, error } = await query;
   if (error) return res.status(500).json(error);
   res.json(data);
 });
 
 app.get("/api/colors/:id", async (req, res) => {
-  const { data, error } = await supabase.from("colors").select("*").eq("id", req.params.id).single();
+  const userId = getRequestUserId(req);
+  let query = supabase.from("colors").select("*").eq("id", req.params.id);
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+  const { data, error } = await query.single();
   if (error) return res.status(500).json(error);
   res.json(data);
 });
 
 app.post("/api/colors", async (req, res) => {
   const { name, hex, season } = req.body;
-  const { data, error } = await supabase.from("colors").insert([{ name, hex, season }]).select();
+  const userId = getRequestUserId(req);
+  const payload = { name, hex, season };
+  if (userId) {
+    payload.user_id = userId;
+  }
+  const { data, error } = await supabase.from("colors").insert([payload]).select();
   if (error) return res.status(500).json(error);
   res.json(data[0]);
 });
 
 app.patch("/api/colors/:id", async (req, res) => {
+  const userId = getRequestUserId(req);
   const { name } = req.body;
-  const { error } = await supabase.from("colors").update({ name }).eq("id", req.params.id);
+  let query = supabase.from("colors").update({ name }).eq("id", req.params.id);
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+  const { error } = await query;
   if (error) return res.status(500).json(error);
   res.sendStatus(200);
 });
 
 app.delete("/api/colors/:id", async (req, res) => {
-  const { error } = await supabase.from("colors").delete().eq("id", req.params.id);
+  const userId = getRequestUserId(req);
+  let query = supabase.from("colors").delete().eq("id", req.params.id);
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+  const { error } = await query;
   if (error) return res.status(500).json(error);
   res.sendStatus(200);
 });
@@ -213,13 +439,23 @@ app.get("/api/pantone", async (req, res) => {
 
 // FORECASTS 
 app.get("/api/forecasts", async (req, res) => {
-  const { data, error } = await supabase.from("forecasts").select("*").order("created_at", { ascending: false });
+  const userId = getRequestUserId(req);
+  let query = supabase.from("forecasts").select("*").order("created_at", { ascending: false });
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+  const { data, error } = await query;
   if (error) return res.status(500).json(error);
   res.json(data);
 });
 
 app.get("/api/forecasts/:id", async (req, res) => {
-  const { data, error } = await supabase.from("forecasts").select("*").eq("id", req.params.id).single();
+  const userId = getRequestUserId(req);
+  let query = supabase.from("forecasts").select("*").eq("id", req.params.id);
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+  const { data, error } = await query.single();
   if (error) return res.status(500).json(error);
   res.json(data);
 });
@@ -228,6 +464,142 @@ app.post("/api/forecasts", async (req, res) => {
   const { data, error } = await supabase.from("forecasts").insert([req.body]).select().single();
   if (error) return res.status(500).json(error);
   res.json(data);
+});
+
+app.post("/api/forecast_colors", async (req, res) => {
+  const { forecast_id, color_id } = req.body;
+  const userId = getRequestUserId(req);
+  const payload = {
+    forecast_id,
+    color_id
+  };
+
+  if (userId) {
+    payload.user_id = userId;
+  }
+
+  const { data, error } = await supabase
+    .from("forecast_colors")
+    .insert([payload])
+    .select()
+    .single();
+
+  if (error) return res.status(500).json(error);
+  res.json(data);
+});
+
+app.get("/api/forecast_colors/:forecastId", async (req, res) => {
+  const userId = getRequestUserId(req);
+  let query = supabase
+    .from("forecast_colors")
+    .select("colors(*)")
+    .eq("forecast_id", req.params.forecastId);
+
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) return res.status(500).json(error);
+  res.json((data || []).map((item) => item.colors).filter(Boolean));
+});
+
+app.post("/api/color_stories", async (req, res) => {
+  const userId = getRequestUserId(req);
+  const payload = {
+    color_id: req.body?.color_id,
+    forecast_id: req.body?.forecast_id ?? null,
+    narrative: req.body?.narrative,
+    design_application: req.body?.design_application,
+    fabric_suggestions: req.body?.fabric_suggestions
+  };
+
+  if (userId) {
+    payload.user_id = userId;
+  }
+
+  const { data, error } = await supabase
+    .from("color_stories")
+    .insert([payload])
+    .select()
+    .single();
+
+  if (error) return res.status(500).json(error);
+  res.json(data);
+});
+
+app.get("/api/color_stories/color/:colorId", async (req, res) => {
+  const userId = getRequestUserId(req);
+  let query = supabase
+    .from("color_stories")
+    .select("*")
+    .eq("color_id", req.params.colorId)
+    .order("created_at", { ascending: false });
+
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) return res.status(500).json(error);
+  res.json(data || []);
+});
+
+app.get("/api/color_stories/:id", async (req, res) => {
+  const userId = getRequestUserId(req);
+  let query = supabase
+    .from("color_stories")
+    .select("*")
+    .eq("id", req.params.id);
+
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { data, error } = await query.single();
+
+  if (error) return res.status(500).json(error);
+  res.json(data);
+});
+
+app.patch("/api/color_stories/:id", async (req, res) => {
+  const userId = getRequestUserId(req);
+  let query = supabase
+    .from("color_stories")
+    .update({
+      narrative: req.body?.narrative,
+      design_application: req.body?.design_application,
+      fabric_suggestions: req.body?.fabric_suggestions
+    })
+    .eq("id", req.params.id);
+
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { data, error } = await query.select().single();
+
+  if (error) return res.status(500).json(error);
+  res.json(data);
+});
+
+app.delete("/api/color_stories/:id", async (req, res) => {
+  const userId = getRequestUserId(req);
+  let query = supabase
+    .from("color_stories")
+    .delete()
+    .eq("id", req.params.id);
+
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { error } = await query;
+
+  if (error) return res.status(500).json(error);
+  res.sendStatus(200);
 });
 
 // COLLECTIONS
@@ -245,13 +617,143 @@ app.post("/api/collections", async (req, res) => {
 
 // TREND BOARDS 
 app.get("/api/trend-boards", async (req, res) => {
-  const { data: boards, error } = await supabase.from("trend_boards").select("*").order("created_at", { ascending: false });
+  const userId = getRequestUserId(req);
+  let query = supabase.from("trend_boards").select("*").order("created_at", { ascending: false });
+
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { data: boards, error } = await query;
   if (error) return res.status(500).json(error);
   const boardsWithCounts = await Promise.all(boards.map(async (board) => {
-    const { count } = await supabase.from("trend_board_colors").select("*", { count: "exact", head: true }).eq("board_id", board.id);
+    let countQuery = supabase.from("trend_board_colors").select("*", { count: "exact", head: true }).eq("board_id", board.id);
+    if (userId) {
+      countQuery = countQuery.eq("user_id", userId);
+    }
+    const { count } = await countQuery;
     return { ...board, colorCount: count || 0 };
   }));
   res.json(boardsWithCounts);
+});
+
+app.post("/api/trend-boards", async (req, res) => {
+  const userId = getRequestUserId(req);
+  const payload = {
+    name: String(req.body?.name || "").trim(),
+    season: String(req.body?.season || "").trim(),
+    year: req.body?.year
+  };
+
+  if (userId) {
+    payload.user_id = userId;
+  }
+
+  const { data, error } = await supabase
+    .from("trend_boards")
+    .insert([payload])
+    .select()
+    .single();
+
+  if (error) return res.status(500).json(error);
+  res.json(data);
+});
+
+app.patch("/api/trend-boards/:boardId", async (req, res) => {
+  const userId = getRequestUserId(req);
+  let query = supabase
+    .from("trend_boards")
+    .update({ name: String(req.body?.name || "").trim() })
+    .eq("id", req.params.boardId);
+
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { error } = await query;
+
+  if (error) return res.status(500).json(error);
+  res.sendStatus(200);
+});
+
+app.delete("/api/trend-boards/:boardId", async (req, res) => {
+  const userId = getRequestUserId(req);
+  let query = supabase
+    .from("trend_boards")
+    .delete()
+    .eq("id", req.params.boardId);
+
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { error } = await query;
+
+  if (error) return res.status(500).json(error);
+  res.sendStatus(200);
+});
+
+app.post("/api/trend-board-colors", async (req, res) => {
+  const userId = getRequestUserId(req);
+  const payload = {
+    board_id: req.body?.board_id,
+    color_id: req.body?.color_id
+  };
+
+  if (userId) {
+    payload.user_id = userId;
+  }
+
+  const { error } = await supabase
+    .from("trend_board_colors")
+    .insert([payload]);
+
+  if (error) {
+    const status = error.code === "23505" ? 409 : 500;
+    return res.status(status).json({
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint
+    });
+  }
+
+  res.json({ ok: true });
+});
+
+app.get("/api/trend-board-colors/:boardId", async (req, res) => {
+  const userId = getRequestUserId(req);
+  let query = supabase
+    .from("trend_board_colors")
+    .select("colors(*)")
+    .eq("board_id", req.params.boardId);
+
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) return res.status(500).json(error);
+  res.json((data || []).map((item) => item.colors).filter(Boolean));
+});
+
+app.delete("/api/trend-board-colors/:boardId/:colorId", async (req, res) => {
+  const userId = getRequestUserId(req);
+  let query = supabase
+    .from("trend_board_colors")
+    .delete()
+    .eq("board_id", req.params.boardId)
+    .eq("color_id", req.params.colorId);
+
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { error } = await query;
+
+  if (error) return res.status(500).json(error);
+  res.sendStatus(200);
 });
 
 startup();

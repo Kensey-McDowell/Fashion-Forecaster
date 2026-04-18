@@ -3,7 +3,14 @@ import { Link } from 'react-router-dom';
 import './userProfile.css';
 
 export default function UserProfile({ user, onLogout }) {
-  // Mock Pantone-style data for the student's color forecasting work
+  const displayName =
+    user?.user_metadata?.full_name ||
+    user?.email?.split('@')[0] ||
+    "Fashion Student";
+
+  const roleLabel =
+    user?.user_metadata?.requested_role === "professor" ? "PROFESSOR" : "FASHION STUDENT";
+
   const savedPalettes = [
     { id: 1, name: "DESERT DUST", code: "14-1312 TCX", hex: "#dabe9a" },
     { id: 2, name: "PALE ORANGE", code: "12-0315 TSX", hex: "#ca905e" },
@@ -23,14 +30,13 @@ export default function UserProfile({ user, onLogout }) {
       </nav>
 
       <main className="profile-main">
-        {/* STUDENT HEADER */}
         <header className="profile-header">
           <p className="overline">STUDENT ARCHIVE</p>
-          <h1 className="user-name" style={{textAlign: 'left'}}>{user?.name || "Kensey McDowell"}</h1>
-          <p className="user-role">FASHION STUDENT — ID: 2026-X94</p>
+          <h1 className="user-name" style={{textAlign: 'left'}}>{displayName}</h1>
+          <p className="user-role">{roleLabel} — ID: 2026-X94</p>
+          {user?.email && <p className="user-role">{user.email}</p>}
         </header>
 
-        {/* COLOR FORECASTING WORK */}
         <section className="profile-section">
           <h2 className="section-title">SAVED COLOR FORECASTS</h2>
           <div className="pantone-grid">
@@ -46,7 +52,6 @@ export default function UserProfile({ user, onLogout }) {
           </div>
         </section>
 
-        {/* LOCAL ASSETS */}
         <section className="profile-section">
           <h2 className="section-title">LOCAL WORKSPACE</h2>
           <div className="collage-status-box">
