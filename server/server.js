@@ -21,6 +21,7 @@ app.use(express.json());
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
 const googleApiKey =
+  process.env.GEMINI_API_KEY ||
   process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
   process.env.GOOGLE_API_KEY;
 
@@ -29,7 +30,9 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 if (!googleApiKey) {
-  console.error("Error: GOOGLE_GENERATIVE_AI_API_KEY / GOOGLE_API_KEY is missing.");
+  console.error(
+    "Error: GEMINI_API_KEY / GOOGLE_GENERATIVE_AI_API_KEY / GOOGLE_API_KEY is missing."
+  );
 }
 
 const google = createGoogleGenerativeAI({ apiKey: googleApiKey });
