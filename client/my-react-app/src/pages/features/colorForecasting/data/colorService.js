@@ -1,5 +1,5 @@
 import { getAuthenticatedUserId } from "../../../../lib/authUser";
-import { supabase } from "../../../../lib/supabaseClient";
+import { logSupabaseError, supabase } from "../../../../lib/supabaseClient";
 
 let isCollectionsTableUnavailable = false;
 
@@ -31,7 +31,10 @@ export async function fetchColors() {
     .order("created_at", { ascending: true });
 
   if (error) {
-    console.error("Fetch error:", error);
+    logSupabaseError("fetchColors", error, {
+      table: "colors",
+      orderBy: "created_at.asc"
+    });
     return [];
   }
 
@@ -50,7 +53,10 @@ export async function getColorById(id) {
     .single();
 
   if (error) {
-    console.error("Get color by id error:", error);
+    logSupabaseError("getColorById", error, {
+      table: "colors",
+      filter: { id }
+    });
     return null;
   }
 
@@ -63,7 +69,9 @@ export async function findNearestPantones(hex, limit = 5) {
     .select("*");
 
   if (error) {
-    console.error("Find nearest Pantones error:", error);
+    logSupabaseError("findNearestPantones", error, {
+      table: "pantone_colors"
+    });
     return [];
   }
 
@@ -102,7 +110,15 @@ export async function insertColor(color) {
     ]);
 
   if (error) {
-    console.error("Insert error:", error);
+    logSupabaseError("insertColor", error, {
+      table: "colors",
+      payload: {
+        user_id: userId,
+        name,
+        hex,
+        season
+      }
+    });
     return false;
   }
 
@@ -123,7 +139,11 @@ export async function updateColorName(id, name) {
     .eq("user_id", userId);
 
   if (error) {
-    console.error("Update color name error:", error);
+    logSupabaseError("updateColorName", error, {
+      table: "colors",
+      filter: { id, user_id: userId },
+      payload: { name }
+    });
     return false;
   }
 
@@ -144,7 +164,10 @@ export async function deleteColor(id) {
     .eq("user_id", userId);
 
   if (error) {
-    console.error("Delete error:", error);
+    logSupabaseError("deleteColor", error, {
+      table: "colors",
+      filter: { id, user_id: userId }
+    });
     return false;
   }
 
@@ -180,7 +203,17 @@ export async function createForecast({
     .single();
 
   if (error) {
-    console.error("Create forecast error:", error);
+    logSupabaseError("createForecast", error, {
+      table: "forecasts",
+      payload: {
+        user_id: userId,
+        season,
+        theme_name,
+        cultural_context,
+        target_market,
+        inspiration
+      }
+    });
     return null;
   }
 
@@ -194,7 +227,10 @@ export async function getForecasts() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Get forecasts error:", error);
+    logSupabaseError("getForecasts", error, {
+      table: "forecasts",
+      orderBy: "created_at.desc"
+    });
     return [];
   }
 
@@ -209,7 +245,10 @@ export async function getForecastById(id) {
     .single();
 
   if (error) {
-    console.error("Get forecast by id error:", error);
+    logSupabaseError("getForecastById", error, {
+      table: "forecasts",
+      filter: { id }
+    });
     return null;
   }
 
@@ -236,7 +275,14 @@ export async function attachColorToForecast(forecast_id, color_id) {
     .single();
 
   if (error) {
-    console.error("Attach color to forecast error:", error);
+    logSupabaseError("attachColorToForecast", error, {
+      table: "forecast_colors",
+      payload: {
+        user_id: userId,
+        forecast_id,
+        color_id
+      }
+    });
     return null;
   }
 
@@ -250,7 +296,11 @@ export async function getColorsForForecast(forecast_id) {
     .eq("forecast_id", forecast_id);
 
   if (error) {
-    console.error("Get colors for forecast error:", error);
+    logSupabaseError("getColorsForForecast", error, {
+      table: "forecast_colors",
+      select: "colors(*)",
+      filter: { forecast_id }
+    });
     return [];
   }
 

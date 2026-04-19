@@ -1,5 +1,5 @@
 import { getAuthenticatedUserId } from "../../../../lib/authUser";
-import { supabase } from "../../../../lib/supabaseClient";
+import { logSupabaseError, supabase } from "../../../../lib/supabaseClient";
 
 function isDuplicateBoardColorError(error) {
   return error?.code === "23505" || error?.status === 409;
@@ -12,7 +12,10 @@ export async function getTrendBoards() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Get trend boards error:", error);
+    logSupabaseError("getTrendBoards", error, {
+      table: "trend_boards",
+      orderBy: "created_at.desc"
+    });
     return [];
   }
 
@@ -24,7 +27,11 @@ export async function getTrendBoards() {
         .eq("board_id", board.id);
 
       if (countError) {
-        console.error("Get trend board color count error:", countError);
+        logSupabaseError("getTrendBoards.countColors", countError, {
+          table: "trend_board_colors",
+          filter: { board_id: board.id },
+          select: "count"
+        });
       }
 
       return { ...board, colorCount: count || 0 };
@@ -55,7 +62,15 @@ export async function createTrendBoard({ name, season, year }) {
     .single();
 
   if (error) {
-    console.error("Create trend board error:", error);
+    logSupabaseError("createTrendBoard", error, {
+      table: "trend_boards",
+      payload: {
+        user_id: userId,
+        name: name.trim(),
+        season: season.trim(),
+        year
+      }
+    });
     return null;
   }
 
@@ -76,7 +91,11 @@ export async function updateTrendBoardName(boardId, name) {
     .eq("user_id", userId);
 
   if (error) {
-    console.error("Update trend board name error:", error);
+    logSupabaseError("updateTrendBoardName", error, {
+      table: "trend_boards",
+      filter: { id: boardId, user_id: userId },
+      payload: { name: name.trim() }
+    });
     return false;
   }
 
@@ -97,7 +116,10 @@ export async function deleteTrendBoard(boardId) {
     .eq("user_id", userId);
 
   if (error) {
-    console.error("Delete trend board error:", error);
+    logSupabaseError("deleteTrendBoard", error, {
+      table: "trend_boards",
+      filter: { id: boardId, user_id: userId }
+    });
     return false;
   }
 
@@ -122,7 +144,14 @@ export async function addColorToBoard(boardId, colorId) {
     ]);
 
   if (error) {
-    console.error("Add color to board error:", error);
+    logSupabaseError("addColorToBoard", error, {
+      table: "trend_board_colors",
+      payload: {
+        user_id: userId,
+        board_id: boardId,
+        color_id: colorId
+      }
+    });
     return {
       ok: false,
       reason: isDuplicateBoardColorError(error) ? "duplicate" : "error"
@@ -147,7 +176,14 @@ export async function removeColorFromBoard(boardId, colorId) {
     .eq("user_id", userId);
 
   if (error) {
-    console.error("Remove color from board error:", error);
+    logSupabaseError("removeColorFromBoard", error, {
+      table: "trend_board_colors",
+      filter: {
+        board_id: boardId,
+        color_id: colorId,
+        user_id: userId
+      }
+    });
     return false;
   }
 
@@ -161,7 +197,11 @@ export async function getBoardColors(boardId) {
     .eq("board_id", boardId);
 
   if (error) {
-    console.error("Get board colors error:", error);
+    logSupabaseError("getBoardColors", error, {
+      table: "trend_board_colors",
+      select: "colors(*)",
+      filter: { board_id: boardId }
+    });
     return [];
   }
 

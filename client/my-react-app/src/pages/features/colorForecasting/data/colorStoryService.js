@@ -1,5 +1,5 @@
 import { getAuthenticatedUserId } from "../../../../lib/authUser";
-import { supabase } from "../../../../lib/supabaseClient";
+import { logSupabaseError, supabase } from "../../../../lib/supabaseClient";
 
 export async function createColorStory({
   color_id,
@@ -30,7 +30,17 @@ export async function createColorStory({
     .single();
 
   if (error) {
-    console.error("Create color story error:", error);
+    logSupabaseError("createColorStory", error, {
+      table: "color_stories",
+      payload: {
+        user_id: userId,
+        color_id,
+        forecast_id,
+        narrative,
+        design_application,
+        fabric_suggestions
+      }
+    });
     return null;
   }
 
@@ -45,7 +55,11 @@ export async function fetchColorStoriesByColor(colorId) {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Fetch color stories by color error:", error);
+    logSupabaseError("fetchColorStoriesByColor", error, {
+      table: "color_stories",
+      filter: { color_id: colorId },
+      orderBy: "created_at.desc"
+    });
     return [];
   }
 
@@ -60,7 +74,10 @@ export async function getColorStoryById(id) {
     .single();
 
   if (error) {
-    console.error("Get color story by id error:", error);
+    logSupabaseError("getColorStoryById", error, {
+      table: "color_stories",
+      filter: { id }
+    });
     return null;
   }
 
@@ -91,7 +108,15 @@ export async function updateColorStory(id, {
     .single();
 
   if (error) {
-    console.error("Update color story error:", error);
+    logSupabaseError("updateColorStory", error, {
+      table: "color_stories",
+      filter: { id, user_id: userId },
+      payload: {
+        narrative,
+        design_application,
+        fabric_suggestions
+      }
+    });
     return null;
   }
 
@@ -112,7 +137,10 @@ export async function deleteColorStory(id) {
     .eq("user_id", userId);
 
   if (error) {
-    console.error("Delete color story error:", error);
+    logSupabaseError("deleteColorStory", error, {
+      table: "color_stories",
+      filter: { id, user_id: userId }
+    });
     return false;
   }
 

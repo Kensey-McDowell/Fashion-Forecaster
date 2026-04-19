@@ -8,3 +8,16 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+export function logSupabaseError(operation, error, details = {}) {
+  console.error(`[Supabase] ${operation} failed`, {
+    url: supabaseUrl,
+    details,
+    message: error?.message ?? null,
+    code: error?.code ?? null,
+    status: error?.status ?? null,
+    hint: error?.hint ?? null,
+    detailsText: error?.details ?? null,
+    error
+  });
+}
