@@ -12,7 +12,7 @@ export const overviewData = {
 
 export const paletteData = {
   label: "Palette Grid",
-  title: "Pantone card layout",
+  title: "Reference color card layout",
   cards: [
     { name: "Soft Clay", code: "PANTONE 15-1317", tone: "#d8b8a6" },
     { name: "Calm Sage", code: "PANTONE 14-6316", tone: "#b7c4b2" },

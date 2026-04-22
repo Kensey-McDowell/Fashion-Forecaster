@@ -15,7 +15,7 @@ import {
   addColorToBoard,
   getTrendBoards
 } from "./services/trendBoardService";
-import { pantoneColors } from "./data/pantoneColors";
+import { pantoneColors as referenceColorOptions } from "./data/pantoneColors";
 import { findClosestColors, findClosestPantones } from "./utils/colorUtils";
 
 export default function ColorDetail({ colorId, onBack }) {
@@ -23,7 +23,7 @@ export default function ColorDetail({ colorId, onBack }) {
   const [activeColorId, setActiveColorId] = useState(colorId);
   const [color, setColor] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [pantones, setPantones] = useState([]);
+  const [referenceMatches, setReferenceMatches] = useState([]);
   const [relatedColors, setRelatedColors] = useState([]);
   const [stories, setStories] = useState([]);
   const [narrative, setNarrative] = useState("");
@@ -79,7 +79,7 @@ export default function ColorDetail({ colorId, onBack }) {
         setColor(currentColor);
 
         if (!currentColor) {
-          setPantones([]);
+          setReferenceMatches([]);
           setRelatedColors([]);
           setCollections([]);
           setStories([]);
@@ -91,7 +91,10 @@ export default function ColorDetail({ colorId, onBack }) {
           fetchColorStoriesByColor(currentColor.id)
         ]);
 
-        setPantones(findClosestPantones(currentColor.hex, pantoneColors, 3));
+        // TODO: A future Pantone workflow needs a trusted Pantone dataset,
+        // stable Pantone IDs/codes, distance thresholds, and an optional
+        // save/validation path before this can become true validation.
+        setReferenceMatches(findClosestPantones(currentColor.hex, referenceColorOptions, 3));
         setRelatedColors(findClosestColors(currentColor.hex, allColors || [], 4));
         setCollections(matchingCollections || []);
         setStories(colorStories || []);
@@ -416,8 +419,12 @@ export default function ColorDetail({ colorId, onBack }) {
 
       <section style={{ marginBottom: "100px" }}>
         <h2 style={{ marginBottom: "40px", fontSize: "28px" }}>
-          Pantone Validation
+          Reference Color Matches
         </h2>
+        <p style={{ margin: "-22px 0 40px", maxWidth: "620px", color: "#6f6a64", lineHeight: 1.7 }}>
+          Reference matches shown for inspiration and comparison. Full Pantone-linked
+          validation is planned for a future iteration.
+        </p>
 
         <div
           style={{
@@ -426,9 +433,9 @@ export default function ColorDetail({ colorId, onBack }) {
             gap: "28px"
           }}
         >
-          {pantones.map((pantone, index) => (
+          {referenceMatches.map((referenceMatch, index) => (
             <div
-              key={pantone.id || pantone.code || pantone.hex || `${color.id}-pantone-${index}`}
+              key={referenceMatch.id || referenceMatch.code || referenceMatch.hex || `${color.id}-reference-${index}`}
               style={{
                 padding: "24px",
                 border: "1px solid #e5dfd7",
@@ -439,21 +446,21 @@ export default function ColorDetail({ colorId, onBack }) {
                 style={{
                   width: "100%",
                   height: "70px",
-                  backgroundColor: pantone.hex,
+                  backgroundColor: referenceMatch.hex,
                   marginBottom: "16px"
                 }}
               />
 
               <p style={{ margin: "0 0 6px", fontWeight: 500 }}>
-                {pantone.name}
+                {referenceMatch.name}
               </p>
 
               <p style={{ margin: "0 0 4px", color: "#666" }}>
-                {pantone.code}
+                {referenceMatch.code}
               </p>
 
               <p style={{ margin: 0, fontSize: "14px", color: "#888" }}>
-                {pantone.hex}
+                {referenceMatch.hex}
               </p>
             </div>
           ))}

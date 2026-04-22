@@ -8,7 +8,7 @@ import {
 export default function ForecastDetail({ forecastId }) {
   const [forecast, setForecast] = useState(null);
   const [colors, setColors] = useState([]);
-  const [paletteValidation, setPaletteValidation] = useState([]);
+  const [referenceMatches, setReferenceMatches] = useState([]);
 
   useEffect(() => {
     async function loadForecast() {
@@ -20,14 +20,14 @@ export default function ForecastDetail({ forecastId }) {
       setForecast(forecastData);
       setColors(colorData || []);
 
-      const validation = await Promise.all(
+      const matches = await Promise.all(
         (colorData || []).map(async (color) => ({
           color,
           pantones: await findNearestPantones(color.hex, 3)
         }))
       );
 
-      setPaletteValidation(validation);
+      setReferenceMatches(matches);
     }
 
     loadForecast();
@@ -86,9 +86,13 @@ export default function ForecastDetail({ forecastId }) {
       </section>
 
       <section style={{ marginBottom: "72px" }}>
-        <h2 style={{ margin: "0 0 20px" }}>Palette Validation</h2>
+        <h2 style={{ margin: "0 0 20px" }}>Reference Color Matches</h2>
+        <p style={{ margin: "0 0 20px", maxWidth: "650px", lineHeight: 1.8, color: "#666" }}>
+          Reference matches shown for inspiration and comparison. Full Pantone-linked
+          validation is planned for a future iteration.
+        </p>
         <div style={{ display: "grid", gap: "20px" }}>
-          {paletteValidation.map(({ color, pantones }) => (
+          {referenceMatches.map(({ color, pantones }) => (
             <div
               key={color.id}
               style={{ paddingBottom: "20px", borderBottom: "1px solid #e2ddd5" }}

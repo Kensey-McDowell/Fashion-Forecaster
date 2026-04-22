@@ -27,7 +27,7 @@ function getRgbDistance(source, target) {
 export async function fetchColors() {
   const { data, error } = await supabase
     .from("colors")
-    .select("*")
+    .select("*, pantone_color:pantone_color_id(*)")
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -48,7 +48,7 @@ export async function getColors() {
 export async function getColorById(id) {
   const { data, error } = await supabase
     .from("colors")
-    .select("*")
+    .select("*, pantone_color:pantone_color_id(*)")
     .eq("id", id)
     .single();
 
@@ -69,11 +69,24 @@ export async function findNearestPantones(hex, limit = 5) {
     .select("*");
 
   if (error) {
+    console.error("[Pantone Debug] findNearestPantones query failed", {
+      hex,
+      limit,
+      message: error?.message ?? null,
+      code: error?.code ?? null,
+      status: error?.status ?? null
+    });
     logSupabaseError("findNearestPantones", error, {
       table: "pantone_colors"
     });
     return [];
   }
+
+  console.log("[Pantone Debug] findNearestPantones query result", {
+    hex,
+    limit,
+    rowCount: data?.length ?? 0
+  });
 
   const sourceRgb = hexToRgb(hex);
 
@@ -98,26 +111,34 @@ export async function insertColor(color) {
   }
 
   const { name, hex, season } = color;
+  console.log("[Pantone Debug] insertColor start", { hex, name, season });
+
+  const [nearestPantone] = await findNearestPantones(hex, 1);
+  console.log("[Pantone Debug] insertColor nearest match", {
+    hex,
+    nearestPantone: nearestPantone ?? null
+  });
+
+  const payload = {
+    user_id: userId,
+    name,
+    hex,
+    season,
+    pantone_color_id: nearestPantone?.id ?? null,
+    match_distance: nearestPantone?.distance ?? null,
+    is_pantone_matched: Boolean(nearestPantone)
+  };
+
+  console.log("[Pantone Debug] insertColor payload", payload);
+
   const { error } = await supabase
     .from("colors")
-    .insert([
-      {
-        user_id: userId,
-        name,
-        hex,
-        season
-      }
-    ]);
+    .insert([payload]);
 
   if (error) {
     logSupabaseError("insertColor", error, {
       table: "colors",
-      payload: {
-        user_id: userId,
-        name,
-        hex,
-        season
-      }
+      payload
     });
     return false;
   }
